@@ -205,7 +205,7 @@ void long_press_key(void)
 
     if (f_indicator_color) {
         indicator_color_press_delay++;
-        if (indicator_color_press_delay >= 100) {
+        if (indicator_color_press_delay >= 300) {
             f_indicator_color = 0;
             indicator_color_press_delay = 0;
         }
@@ -423,7 +423,7 @@ typedef struct keyb_indicator_rgb_input_t
  * then rgb values are input, each value is closed with "enter" key.
  * note: after the indicator number input no "enter" key should be input.
  */
-void process_indicator_rgb_input(uint16_t keycode, keyb_indicator_rgb_input_t* rgb_input)
+bool process_indicator_rgb_input(uint16_t keycode, keyb_indicator_rgb_input_t* rgb_input)
 {
     if (keycode >= KC_1 && keycode <= KC_0) {
         if (rgb_input->indicator == 0) {
@@ -443,8 +443,10 @@ void process_indicator_rgb_input(uint16_t keycode, keyb_indicator_rgb_input_t* r
             rgb_input->indicator = 0;
             rgb_input->rgb_index = 0;
             rgb_input->rgb = 0;
+            return true;
         }
     }
+    return false;
 }
 
 /**
@@ -455,7 +457,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record)
     static keyb_indicator_rgb_input_t indicator_rgb_input = {0};
 
     if (f_indicator_color && record->event.pressed) {
-        process_indicator_rgb_input(keycode, &indicator_rgb_input);
+        if (process_indicator_rgb_input(keycode, &indicator_rgb_input)) {
+            f_indicator_color = 0;
+        }
     }
 
     switch (keycode) {

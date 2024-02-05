@@ -259,9 +259,9 @@ void set_right_rgb(uint8_t r, uint8_t g, uint8_t b)
 void set_indicator_leds(keyb_indicators_t inds)
 {
     /* "side line" contains "SIDE_LINE" number leds */
-    #define INDICATOR_NUM_LEDS      1
-    #define INDICATOR_CAPS_INDEX    4
-    #define INDICATOR_NUM_INDEX     0
+    #define INDICATOR_NUM_LEDS      5
+    #define INDICATOR_CAPS_INDEX    0
+    #define INDICATOR_NUM_INDEX     5
     if (inds.caps_lock) {
         /* set_left_rgb(0X00, SIDE_BLINK_LIGHT, SIDE_BLINK_LIGHT); */
         for (int i = 0; i < INDICATOR_NUM_LEDS; i++)
