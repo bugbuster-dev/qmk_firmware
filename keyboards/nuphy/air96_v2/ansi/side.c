@@ -262,10 +262,15 @@ void set_right_rgb(uint8_t r, uint8_t g, uint8_t b)
  */
 void set_indicator_leds(keyb_indicators_t inds)
 {
+    static const uint8_t SIDE_MAX_OFFSET = 2*SIDE_LINE;
     for (int i = 0; i < MAX_KEYB_INDICATORS; i++) {
         if (inds.indicator_flags & (1<<i)) {
-            for (int l = 0; l < inds.indicator_led_rgb[i].num_leds; l++)
-                rgb_matrix_set_color(SIDE_INDEX + inds.indicator_led_rgb[i].led_index + l, inds.indicator_led_rgb[i].r, inds.indicator_led_rgb[i].g, inds.indicator_led_rgb[i].b);
+            uint8_t led_index = inds.indicator_led_rgb[i].led_index;
+            for (int l = 0; l < inds.indicator_led_rgb[i].num_leds; l++) {
+                uint8_t off = led_index + l;
+                if (off < SIDE_MAX_OFFSET)
+                    rgb_matrix_set_color(SIDE_INDEX + off, inds.indicator_led_rgb[i].r, inds.indicator_led_rgb[i].g, inds.indicator_led_rgb[i].b);
+            }
         }
     }
 }
@@ -347,12 +352,7 @@ void sleep_sw_led_show(void)
  */
 void keyb_indicators_show(keyb_indicator_led_rgb_t keyb_inds_rgb[MAX_KEYB_INDICATORS])
 {
-    keyb_indicators_t inds = { .caps_lock = 0, .num_lock = 0, 
-                               .indicator_led_rgb = { 
-                                    { .led_index = 0, .num_leds = 5},
-                                    { .led_index = 5, .num_leds = 5} 
-                               } 
-                             };
+    keyb_indicators_t inds = { .caps_lock = 0, .num_lock = 0 };
 
     if (dev_info.link_mode == LINK_USB) {
         inds.caps_lock  = (host_keyboard_led_state().caps_lock != 0);
@@ -364,9 +364,9 @@ void keyb_indicators_show(keyb_indicator_led_rgb_t keyb_inds_rgb[MAX_KEYB_INDICA
 
     for (int i = 0; i < MAX_KEYB_INDICATORS; i++) {
         if (inds.indicator_flags & (1<<i)) {
-            inds.indicator_led_rgb[i].r = keyb_inds_rgb[i].r;
-            inds.indicator_led_rgb[i].g = keyb_inds_rgb[i].g;
-            inds.indicator_led_rgb[i].b = keyb_inds_rgb[i].b;
+            inds.indicator_led_rgb[i].rgb_all   = keyb_inds_rgb[i].rgb_all;
+            inds.indicator_led_rgb[i].led_index = keyb_inds_rgb[i].led_index;
+            inds.indicator_led_rgb[i].num_leds  = keyb_inds_rgb[i].num_leds;
         }
     }
     set_indicator_leds(inds);

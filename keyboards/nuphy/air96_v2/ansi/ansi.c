@@ -68,8 +68,8 @@ uint8_t rf_sw_temp             = 0;
 uint16_t indicator_color_press_delay = 0;  
 
 keyb_indicator_led_rgb_t keyb_indicator_rgb[MAX_KEYB_INDICATORS] = {
-    { .r = 0, .g = 128, .b = 128 }, 
-    { .r = 0, .g = 128, .b = 128 } 
+    { .r = 0, .g = 128, .b = 128, .led_index = 0, .num_leds = 5 },
+    { .r = 0, .g = 128, .b = 128, .led_index = 5, .num_leds = 5 }
 };
 
 
@@ -409,13 +409,27 @@ void m_power_on_dial_sw_scan(void)
     }
 }
 
+
 /* struct to keep indicator rgb input from user */
 typedef struct keyb_indicator_rgb_input_t
 {
+    uint8_t input_state;
+
     uint8_t indicator;
     uint8_t rgb_index;
     uint8_t rgb;
+
+    uint8_t led_index;
+    uint8_t num_leds;
 } keyb_indicator_rgb_input_t;
+
+enum {
+    INPUT_BEGIN = 0,
+    INPUT_RGB,
+    INPUT_LED_INDEX,
+    INPUT_NUM_LEDS,
+    INPUT_END
+};
 
 /**
  * @brief  process keyboard indicator rgb input.
@@ -428,27 +442,56 @@ typedef struct keyb_indicator_rgb_input_t
  */
 bool process_indicator_rgb_input(uint16_t keycode, keyb_indicator_rgb_input_t* rgb_input)
 {
-    if (keycode >= KC_1 && keycode <= KC_0) {
-        if (rgb_input->indicator == 0) {
+    if (rgb_input->input_state == INPUT_BEGIN) {
+        if (keycode >= KC_1 && keycode <= KC_0) {
             rgb_input->indicator = keycode - KC_1 + 1;
             rgb_input->indicator = (rgb_input->indicator > MAX_KEYB_INDICATORS)? 0: rgb_input->indicator;
-        } else {
+            if (rgb_input->indicator) {
+                rgb_input->input_state = INPUT_RGB;
+            }
+            return false;
+        }
+    }
+    if (rgb_input->input_state == INPUT_LED_INDEX) {
+        if (keycode >= KC_1 && keycode <= KC_0) {
+            rgb_input->led_index = (keycode == KC_0)? 0: keycode - KC_1 + 1;
+            keyb_indicator_rgb[rgb_input->indicator-1].led_index = rgb_input->led_index;
+            rgb_input->input_state = INPUT_NUM_LEDS;
+        }
+        return false;
+    }
+    if (rgb_input->input_state == INPUT_NUM_LEDS) {
+        if (keycode >= KC_1 && keycode <= KC_0) {
+            rgb_input->num_leds = (keycode == KC_0)? 0: keycode - KC_1 + 1;
+            keyb_indicator_rgb[rgb_input->indicator-1].num_leds = rgb_input->num_leds;
+            rgb_input->input_state = INPUT_RGB;
+        }
+        return false;
+    }
+    if (rgb_input->input_state == INPUT_RGB) {
+        if (keycode >= KC_1 && keycode <= KC_0) {
             rgb_input->rgb *= 10;
             rgb_input->rgb += (keycode == KC_0)? 0: keycode - KC_1 + 1;
         }
-    }
-    if (keycode == KC_ENTER && rgb_input->indicator) {
-        keyb_indicator_rgb[rgb_input->indicator-1].rgb[rgb_input->rgb_index] = rgb_input->rgb;
-        rgb_input->rgb_index++;
-        rgb_input->rgb = 0;
-
-        if (rgb_input->rgb_index > 2) {
-            rgb_input->indicator = 0;
-            rgb_input->rgb_index = 0;
+        if (keycode == KC_ENTER && rgb_input->indicator) {
+            keyb_indicator_rgb[rgb_input->indicator-1].rgb[rgb_input->rgb_index] = rgb_input->rgb;
+            rgb_input->rgb_index++;
             rgb_input->rgb = 0;
-            return true;
+
+            if (rgb_input->rgb_index > 2) {
+                rgb_input->indicator = 0;
+                rgb_input->rgb_index = 0;
+                rgb_input->rgb = 0;
+                rgb_input->input_state = INPUT_BEGIN;
+                return true;
+            }
         }
+        if (keycode == KC_L) {
+            rgb_input->input_state = INPUT_LED_INDEX;
+        }
+        return false;
     }
+
     return false;
 }
 
@@ -715,6 +758,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record)
                 indicator_rgb_input.indicator = 0;
                 indicator_rgb_input.rgb_index = 0;
                 indicator_rgb_input.rgb = 0;
+                indicator_rgb_input.input_state = INPUT_BEGIN;
                 indicator_color_press_delay = 0;
             }
             return false;

@@ -180,6 +180,7 @@ typedef struct keyb_indicator_led_rgb_t
             uint8_t b;
         };
         uint8_t rgb[3];
+        uint32_t rgb_all; /* to set r/g/b values all in one assignment */
     };
     
     uint8_t led_index;
