@@ -52,6 +52,7 @@ bool f_rf_sw_press      = 0;
 bool f_dev_reset_press  = 0;  
 bool f_rgb_test_press   = 0;  
 bool f_bat_num_show     = 0;
+bool f_indicator_color  = 0;
 
 uint8_t host_mode;
 host_driver_t *m_host_driver   = 0;
@@ -64,9 +65,14 @@ uint16_t rf_sw_press_delay     = 0;
 uint16_t rgb_test_press_delay  = 0;  
 uint8_t rf_sw_temp             = 0;
 
+uint16_t indicator_color_press_delay = 0;  
+
+uint8_t keyb_indicator_rgb[MAX_KEYB_INDICATORS][3] = { {0,128,128}, {0,0,255}, {0,0,0}, {0,0,0} };
+
+
 void rf_uart_init(void);
 void rf_device_init(void);
-void m_side_led_show(void);
+void m_side_led_show(uint8_t keyb_inds_rgb[MAX_KEYB_INDICATORS][3]);
 void dev_sts_sync(void);
 void uart_send_report_func(void);
 void uart_receive_pro(void);
@@ -195,6 +201,14 @@ void long_press_key(void)
         }
     } else {
         rgb_test_press_delay = 0;
+    }
+
+    if (f_indicator_color) {
+        indicator_color_press_delay++;
+        if (indicator_color_press_delay >= 100) {
+            f_indicator_color = 0;
+            indicator_color_press_delay = 0;
+        }
     }
 }
 
@@ -392,11 +406,58 @@ void m_power_on_dial_sw_scan(void)
     }
 }
 
+/* struct to keep indicator rgb input from user */
+typedef struct keyb_indicator_rgb_input_t
+{
+    uint8_t indicator;
+    uint8_t rgb_index;
+    uint8_t rgb;
+} keyb_indicator_rgb_input_t;
+
+/**
+ * @brief  process keyboard indicator rgb input.
+ * 
+ * first number is to select the indicator:
+ *   caps lock: 1
+ *   num lock: 2
+ * then rgb values are input, each value is closed with "enter" key.
+ * note: after the indicator number input no "enter" key should be input.
+ */
+void process_indicator_rgb_input(uint16_t keycode, keyb_indicator_rgb_input_t* rgb_input)
+{
+    if (keycode >= KC_1 && keycode <= KC_0) {
+        if (rgb_input->indicator == 0) {
+            rgb_input->indicator = keycode - KC_1 + 1;
+            rgb_input->indicator = (rgb_input->indicator > MAX_KEYB_INDICATORS)? 0: rgb_input->indicator;
+        } else {
+            rgb_input->rgb *= 10;
+            rgb_input->rgb += (keycode == KC_0)? 0: keycode - KC_1 + 1;
+        }
+    }
+    if (keycode == KC_ENTER && rgb_input->indicator) {
+        keyb_indicator_rgb[rgb_input->indicator-1][rgb_input->rgb_index] = rgb_input->rgb;
+        rgb_input->rgb_index++;
+        rgb_input->rgb = 0;
+
+        if (rgb_input->rgb_index > 2) {
+            rgb_input->indicator = 0;
+            rgb_input->rgb_index = 0;
+            rgb_input->rgb = 0;
+        }
+    }
+}
+
 /**
  * @brief  qmk process record
  */
 bool process_record_user(uint16_t keycode, keyrecord_t *record)
 {
+    static keyb_indicator_rgb_input_t indicator_rgb_input = {0};
+
+    if (f_indicator_color && record->event.pressed) {
+        process_indicator_rgb_input(keycode, &indicator_rgb_input);
+    }
+
     switch (keycode) {
         case RF_DFU:
             if (record->event.pressed) {
@@ -641,6 +702,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record)
             }
             return false;
 
+        case KEYB_INDICATOR_COLOR:
+            if (record->event.pressed) {
+                f_indicator_color = 1;
+                indicator_rgb_input.indicator = 0;
+                indicator_rgb_input.rgb_index = 0;
+                indicator_rgb_input.rgb = 0;
+                indicator_color_press_delay = 0;
+            }
+            return false;
+
         default:
             return true;
     }
@@ -749,7 +820,7 @@ void housekeeping_task_user(void)
 
     dial_sw_scan();
 
-    m_side_led_show();
+    m_side_led_show(keyb_indicator_rgb);
 
     Sleep_Handle();
 }

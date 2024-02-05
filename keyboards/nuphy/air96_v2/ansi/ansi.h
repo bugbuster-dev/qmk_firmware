@@ -46,7 +46,8 @@ enum custom_keycodes {
     SLEEP_MODE,
     BAT_SHOW,
     RGB_TEST,
-    BAT_NUM
+    BAT_NUM,
+    KEYB_INDICATOR_COLOR
 };
 
 
@@ -167,3 +168,5 @@ typedef struct
     uint8_t sleep_enable;
     uint8_t retain2;
 } user_config_t;
+
+#define MAX_KEYB_INDICATORS 4

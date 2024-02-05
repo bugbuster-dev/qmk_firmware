@@ -75,6 +75,9 @@ typedef struct keyb_indicators_t
     uint8_t scroll_lock:1;
     uint8_t insert:1;
     */
+
+   uint8_t caps_lock_rgb[3];
+   uint8_t num_lock_rgb[3];
 } keyb_indicators_t;
 
 extern DEV_INFO_STRUCT dev_info;
@@ -262,13 +265,13 @@ void set_indicator_leds(keyb_indicators_t inds)
     if (inds.caps_lock) {
         /* set_left_rgb(0X00, SIDE_BLINK_LIGHT, SIDE_BLINK_LIGHT); */
         for (int i = 0; i < INDICATOR_NUM_LEDS; i++)
-            rgb_matrix_set_color(SIDE_INDEX + INDICATOR_CAPS_INDEX + i, 0, SIDE_BLINK_LIGHT, SIDE_BLINK_LIGHT);
+            rgb_matrix_set_color(SIDE_INDEX + INDICATOR_CAPS_INDEX + i, inds.caps_lock_rgb[0], inds.caps_lock_rgb[1], inds.caps_lock_rgb[2]);
 
     }
     if (inds.num_lock) {
         /* set_right_rgb(0X00, SIDE_BLINK_LIGHT, SIDE_BLINK_LIGHT); */
         for (int i = 0; i < INDICATOR_NUM_LEDS; i++)
-            rgb_matrix_set_color(SIDE_INDEX + INDICATOR_NUM_INDEX + i, 0, 0, 255);
+            rgb_matrix_set_color(SIDE_INDEX + INDICATOR_NUM_INDEX + i, inds.num_lock_rgb[0], inds.num_lock_rgb[1], inds.num_lock_rgb[2]);
     }
 }
 
@@ -347,7 +350,7 @@ void sleep_sw_led_show(void)
 /**
  * @brief  show "keyboard indicators" (caps/num/...), these indicators are set from host system
  */
-void keyb_indicators_show(void)
+void keyb_indicators_show(uint8_t keyb_inds_rgb[MAX_KEYB_INDICATORS][3])
 {
     keyb_indicators_t inds = { .caps_lock = 0, .num_lock = 0 };
 
@@ -359,6 +362,16 @@ void keyb_indicators_show(void)
         inds.num_lock   = ((dev_info.rf_led & 0x01) != 0);
     }
 
+    if (inds.caps_lock) {
+        inds.caps_lock_rgb[0] = keyb_inds_rgb[0][0];
+        inds.caps_lock_rgb[1] = keyb_inds_rgb[0][1];
+        inds.caps_lock_rgb[2] = keyb_inds_rgb[0][2];
+    }
+    if (inds.num_lock) {
+        inds.num_lock_rgb[0] = keyb_inds_rgb[1][0];
+        inds.num_lock_rgb[1] = keyb_inds_rgb[1][1];
+        inds.num_lock_rgb[2] = keyb_inds_rgb[1][2];
+    }
     set_indicator_leds(inds);
 }
 
@@ -879,7 +892,7 @@ void rgb_test_show(void)
 /**
  * @brief  side_led_show.
  */
-void m_side_led_show(void)
+void m_side_led_show(uint8_t keyb_inds_rgb[MAX_KEYB_INDICATORS][3])
 {
     side_play_cnt += timer_elapsed32(side_play_timer);
     side_play_timer = timer_read32();
@@ -896,6 +909,6 @@ void m_side_led_show(void)
     sleep_sw_led_show();
     sys_sw_led_show();
 
-    keyb_indicators_show();
+    keyb_indicators_show(keyb_inds_rgb);
     rf_led_show();
 }
