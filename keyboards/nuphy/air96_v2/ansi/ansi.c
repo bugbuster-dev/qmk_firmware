@@ -67,7 +67,7 @@ uint8_t rf_sw_temp             = 0;
 
 uint16_t indicator_color_press_delay = 0;  
 
-uint8_t keyb_indicator_rgb[MAX_KEYB_INDICATORS][3] = { {0,128,128}, {0,0,255}, {0,0,0}, {0,0,0} };
+uint8_t keyb_indicator_rgb[MAX_KEYB_INDICATORS][3] = { {0,128,128}, {0,128,128}, {0,0,0}, {0,0,0} };
 
 
 void rf_uart_init(void);
