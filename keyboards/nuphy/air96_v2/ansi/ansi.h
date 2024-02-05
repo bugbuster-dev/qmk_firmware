@@ -169,4 +169,19 @@ typedef struct
     uint8_t retain2;
 } user_config_t;
 
-#define MAX_KEYB_INDICATORS 4
+#define MAX_KEYB_INDICATORS 2
+
+typedef struct keyb_indicator_led_rgb_t
+{
+    union {
+        struct {
+            uint8_t r;
+            uint8_t g;
+            uint8_t b;
+        };
+        uint8_t rgb[3];
+    };
+    
+    uint8_t led_index;
+    uint8_t num_leds;
+} keyb_indicator_led_rgb_t;

@@ -67,12 +67,15 @@ uint8_t rf_sw_temp             = 0;
 
 uint16_t indicator_color_press_delay = 0;  
 
-uint8_t keyb_indicator_rgb[MAX_KEYB_INDICATORS][3] = { {0,128,128}, {0,128,128}, {0,0,0}, {0,0,0} };
+keyb_indicator_led_rgb_t keyb_indicator_rgb[MAX_KEYB_INDICATORS] = {
+    { .r = 0, .g = 128, .b = 128 }, 
+    { .r = 0, .g = 128, .b = 128 } 
+};
 
 
 void rf_uart_init(void);
 void rf_device_init(void);
-void m_side_led_show(uint8_t keyb_inds_rgb[MAX_KEYB_INDICATORS][3]);
+void m_side_led_show(keyb_indicator_led_rgb_t keyb_inds_rgb[MAX_KEYB_INDICATORS]);
 void dev_sts_sync(void);
 void uart_send_report_func(void);
 void uart_receive_pro(void);
@@ -435,7 +438,7 @@ bool process_indicator_rgb_input(uint16_t keycode, keyb_indicator_rgb_input_t* r
         }
     }
     if (keycode == KC_ENTER && rgb_input->indicator) {
-        keyb_indicator_rgb[rgb_input->indicator-1][rgb_input->rgb_index] = rgb_input->rgb;
+        keyb_indicator_rgb[rgb_input->indicator-1].rgb[rgb_input->rgb_index] = rgb_input->rgb;
         rgb_input->rgb_index++;
         rgb_input->rgb = 0;
 

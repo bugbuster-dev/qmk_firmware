@@ -67,17 +67,21 @@ uint8_t side_play_cnt       = 0;
 uint32_t side_play_timer    = 0;
 uint8_t r_temp, g_temp, b_temp;
 
+
 typedef struct keyb_indicators_t
 {
-    uint8_t caps_lock:1;
-    uint8_t num_lock:1;
-    /*
-    uint8_t scroll_lock:1;
-    uint8_t insert:1;
-    */
+    union {
+        struct {
+            uint8_t caps_lock:1;
+            uint8_t num_lock:1;
+            /*
+            uint8_t scroll_lock:1;
+            */
+        };
+        uint8_t indicator_flags;
+    };
 
-   uint8_t caps_lock_rgb[3];
-   uint8_t num_lock_rgb[3];
+    keyb_indicator_led_rgb_t indicator_led_rgb[MAX_KEYB_INDICATORS];
 } keyb_indicators_t;
 
 extern DEV_INFO_STRUCT dev_info;
@@ -258,20 +262,11 @@ void set_right_rgb(uint8_t r, uint8_t g, uint8_t b)
  */
 void set_indicator_leds(keyb_indicators_t inds)
 {
-    /* "side line" contains "SIDE_LINE" number leds */
-    #define INDICATOR_NUM_LEDS      5
-    #define INDICATOR_CAPS_INDEX    0
-    #define INDICATOR_NUM_INDEX     5
-    if (inds.caps_lock) {
-        /* set_left_rgb(0X00, SIDE_BLINK_LIGHT, SIDE_BLINK_LIGHT); */
-        for (int i = 0; i < INDICATOR_NUM_LEDS; i++)
-            rgb_matrix_set_color(SIDE_INDEX + INDICATOR_CAPS_INDEX + i, inds.caps_lock_rgb[0], inds.caps_lock_rgb[1], inds.caps_lock_rgb[2]);
-
-    }
-    if (inds.num_lock) {
-        /* set_right_rgb(0X00, SIDE_BLINK_LIGHT, SIDE_BLINK_LIGHT); */
-        for (int i = 0; i < INDICATOR_NUM_LEDS; i++)
-            rgb_matrix_set_color(SIDE_INDEX + INDICATOR_NUM_INDEX + i, inds.num_lock_rgb[0], inds.num_lock_rgb[1], inds.num_lock_rgb[2]);
+    for (int i = 0; i < MAX_KEYB_INDICATORS; i++) {
+        if (inds.indicator_flags & (1<<i)) {
+            for (int l = 0; l < inds.indicator_led_rgb[i].num_leds; l++)
+                rgb_matrix_set_color(SIDE_INDEX + inds.indicator_led_rgb[i].led_index + l, inds.indicator_led_rgb[i].r, inds.indicator_led_rgb[i].g, inds.indicator_led_rgb[i].b);
+        }
     }
 }
 
@@ -350,9 +345,14 @@ void sleep_sw_led_show(void)
 /**
  * @brief  show "keyboard indicators" (caps/num/...), these indicators are set from host system
  */
-void keyb_indicators_show(uint8_t keyb_inds_rgb[MAX_KEYB_INDICATORS][3])
+void keyb_indicators_show(keyb_indicator_led_rgb_t keyb_inds_rgb[MAX_KEYB_INDICATORS])
 {
-    keyb_indicators_t inds = { .caps_lock = 0, .num_lock = 0 };
+    keyb_indicators_t inds = { .caps_lock = 0, .num_lock = 0, 
+                               .indicator_led_rgb = { 
+                                    { .led_index = 0, .num_leds = 5},
+                                    { .led_index = 5, .num_leds = 5} 
+                               } 
+                             };
 
     if (dev_info.link_mode == LINK_USB) {
         inds.caps_lock  = (host_keyboard_led_state().caps_lock != 0);
@@ -362,15 +362,12 @@ void keyb_indicators_show(uint8_t keyb_inds_rgb[MAX_KEYB_INDICATORS][3])
         inds.num_lock   = ((dev_info.rf_led & 0x01) != 0);
     }
 
-    if (inds.caps_lock) {
-        inds.caps_lock_rgb[0] = keyb_inds_rgb[0][0];
-        inds.caps_lock_rgb[1] = keyb_inds_rgb[0][1];
-        inds.caps_lock_rgb[2] = keyb_inds_rgb[0][2];
-    }
-    if (inds.num_lock) {
-        inds.num_lock_rgb[0] = keyb_inds_rgb[1][0];
-        inds.num_lock_rgb[1] = keyb_inds_rgb[1][1];
-        inds.num_lock_rgb[2] = keyb_inds_rgb[1][2];
+    for (int i = 0; i < MAX_KEYB_INDICATORS; i++) {
+        if (inds.indicator_flags & (1<<i)) {
+            inds.indicator_led_rgb[i].r = keyb_inds_rgb[i].r;
+            inds.indicator_led_rgb[i].g = keyb_inds_rgb[i].g;
+            inds.indicator_led_rgb[i].b = keyb_inds_rgb[i].b;
+        }
     }
     set_indicator_leds(inds);
 }
@@ -892,7 +889,7 @@ void rgb_test_show(void)
 /**
  * @brief  side_led_show.
  */
-void m_side_led_show(uint8_t keyb_inds_rgb[MAX_KEYB_INDICATORS][3])
+void m_side_led_show(keyb_indicator_led_rgb_t keyb_inds_rgb[MAX_KEYB_INDICATORS])
 {
     side_play_cnt += timer_elapsed32(side_play_timer);
     side_play_timer = timer_read32();
