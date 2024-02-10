@@ -260,10 +260,11 @@ void set_right_rgb(uint8_t r, uint8_t g, uint8_t b)
 void set_indicator_leds(keyb_indicators_t inds)
 {
     if (inds.caps_lock) {
-        set_left_rgb(0X00, SIDE_BLINK_LIGHT, SIDE_BLINK_LIGHT);
+        set_left_rgb(0, SIDE_BLINK_LIGHT, SIDE_BLINK_LIGHT);
     }
     if (inds.num_lock) {
-        set_right_rgb(0X00, SIDE_BLINK_LIGHT, SIDE_BLINK_LIGHT);
+        //set_right_rgb(0, SIDE_BLINK_LIGHT, SIDE_BLINK_LIGHT);
+        rgb_matrix_set_color(33, 0, SIDE_BLINK_LIGHT, SIDE_BLINK_LIGHT);
     }
 }
 
@@ -666,12 +667,12 @@ void bat_led_close(void)
 /**
  * @brief  Battery level indicator
  */
-uint8_t bat_pwm_buf[6 * 3] = {0};
-uint8_t bat_end_led        = 0;
-uint8_t bat_r, bat_g, bat_b;
-
 void bat_percent_led(uint8_t bat_percent)
 {
+    //uint8_t bat_pwm_buf[6 * 3] = {0};
+    uint8_t bat_end_led        = 0;
+    uint8_t bat_r, bat_g, bat_b;
+
     if (bat_percent <= 20) {
         bat_end_led = 0;
         bat_r = SIDE_BLINK_LIGHT, bat_g = 0, bat_b = 0;
