@@ -21,14 +21,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DYNAMIC_KEYMAP_MACRO_DELAY  8
 #define EECONFIG_USER_DATA_SIZE     8
 
-#define DEV_MODE_PIN               C0  
-#define SYS_MODE_PIN               C1 
-#define DC_BOOST_PIN               C2 
-#define NRF_RESET_PIN              B4 
-#define NRF_BOOT_PIN               B5  
-#define NRF_WAKEUP_PIN             C4 
-#define RGB_DRIVER_SDB1            C6  
-#define RGB_DRIVER_SDB2            C7  
+#define DEV_MODE_PIN               C0
+#define SYS_MODE_PIN               C1
+#define DC_BOOST_PIN               C2
+#define NRF_RESET_PIN              B4
+#define NRF_BOOT_PIN               B5
+#define NRF_WAKEUP_PIN             C4
+#define RGB_DRIVER_SDB1            C6
+#define RGB_DRIVER_SDB2            C7
 
 #define SERIAL_DRIVER              SD1
 #define SD1_TX_PIN                 B6
@@ -68,6 +68,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DRIVER_2_LED_TOTAL         (42 + 10)
 #define RGB_MATRIX_LED_COUNT       (DRIVER_1_LED_TOTAL + DRIVER_2_LED_TOTAL)
 
-#define RGB_MATRIX_DEFAULT_MODE    RGB_MATRIX_CYCLE_LEFT_RIGHT  
-
-
+//#define RGB_MATRIX_DEFAULT_MODE    RGB_MATRIX_CYCLE_LEFT_RIGHT
+#define RGB_MATRIX_DEFAULT_MODE         RGB_MATRIX_SOLID_REACTIVE_WIDE
+#define RGB_MATRIX_NUPHY_DEFAULT_HSV    170,255,RGB_MATRIX_MAXIMUM_BRIGHTNESS-RGB_MATRIX_VAL_STEP*2

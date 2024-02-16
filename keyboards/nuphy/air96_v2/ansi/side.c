@@ -79,6 +79,8 @@ typedef struct keyb_indicators_t
         };
         uint8_t indicator_flags;
     };
+
+    keyb_indicator_config_t indicator_led_rgb[MAX_KEYB_INDICATORS];
 } keyb_indicators_t;
 
 extern DEV_INFO_STRUCT dev_info;
@@ -260,11 +262,20 @@ void set_right_rgb(uint8_t r, uint8_t g, uint8_t b)
 void set_indicator_leds(keyb_indicators_t inds)
 {
     if (inds.caps_lock) {
-        set_left_rgb(0, SIDE_BLINK_LIGHT, SIDE_BLINK_LIGHT);
+        uint8_t ind = 0;
+        const uint8_t* rgb = inds.indicator_led_rgb[ind].rgb;
+        if (inds.indicator_led_rgb[ind].indicator_select == 1)
+            set_left_rgb(rgb[0], rgb[1], rgb[2]);
+        if (inds.indicator_led_rgb[ind].indicator_select == 2)
+            rgb_matrix_set_color(55, rgb[0], rgb[1], rgb[2]);
     }
     if (inds.num_lock) {
-        //set_right_rgb(0, SIDE_BLINK_LIGHT, SIDE_BLINK_LIGHT);
-        rgb_matrix_set_color(33, 0, SIDE_BLINK_LIGHT, SIDE_BLINK_LIGHT);
+        uint8_t ind = 1;
+        const uint8_t* rgb = inds.indicator_led_rgb[ind].rgb;
+        if (inds.indicator_led_rgb[ind].indicator_select == 1)
+            set_right_rgb(rgb[0], rgb[1], rgb[2]);
+        if (inds.indicator_led_rgb[ind].indicator_select == 2)
+            rgb_matrix_set_color(33, rgb[0], rgb[1], rgb[2]);
     }
 }
 
@@ -343,7 +354,7 @@ void sleep_sw_led_show(void)
 /**
  * @brief  show "keyboard indicators" (caps/num/...), these indicators are set from host system
  */
-void keyb_indicators_show(void)
+void keyb_indicators_show(keyb_indicator_config_t keyb_inds_rgb[MAX_KEYB_INDICATORS])
 {
     keyb_indicators_t inds = { .caps_lock = 0, .num_lock = 0 };
 
@@ -355,6 +366,12 @@ void keyb_indicators_show(void)
         inds.num_lock   = ((dev_info.rf_led & 0x01) != 0);
     }
 
+    for (int i = 0; i < MAX_KEYB_INDICATORS; i++) {
+        if (inds.indicator_flags & (1<<i)) {
+            inds.indicator_led_rgb[i].rgb_all           = keyb_inds_rgb[i].rgb_all;
+            inds.indicator_led_rgb[i].indicator_select  = keyb_inds_rgb[i].indicator_select;
+        }
+    }
     set_indicator_leds(inds);
 }
 
@@ -821,7 +838,7 @@ void device_reset_init(void)
     rgb_matrix_enable();
     rgb_matrix_mode(RGB_MATRIX_DEFAULT_MODE);
     rgb_matrix_set_speed(255 - RGB_MATRIX_SPD_STEP * 2);
-    rgb_matrix_sethsv(255, 255, RGB_MATRIX_MAXIMUM_BRIGHTNESS - RGB_MATRIX_VAL_STEP * 2);
+    rgb_matrix_sethsv(RGB_MATRIX_NUPHY_DEFAULT_HSV);
 
     user_config.default_brightness_flag = 0xA5;
     user_config.ee_side_mode            = side_mode;
@@ -875,7 +892,7 @@ void rgb_test_show(void)
 /**
  * @brief  side_led_show.
  */
-void m_side_led_show(void)
+void m_side_led_show(keyb_indicator_config_t keyb_inds_rgb[MAX_KEYB_INDICATORS])
 {
     side_play_cnt += timer_elapsed32(side_play_timer);
     side_play_timer = timer_read32();
@@ -892,6 +909,6 @@ void m_side_led_show(void)
     sleep_sw_led_show();
     sys_sw_led_show();
 
-    keyb_indicators_show();
+    keyb_indicators_show(keyb_inds_rgb);
     rf_led_show();
 }

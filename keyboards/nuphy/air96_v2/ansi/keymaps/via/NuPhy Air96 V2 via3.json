@@ -190,6 +190,10 @@
     {
 		"name": "RGB\nTest",
 		"title": "Hold for 3 seconds for RGB color test"
+	},
+    {
+		"name": "Keyb\nIndicator",
+		"title": "Keyboard Indicator config"
 	}
 ]
 }
