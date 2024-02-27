@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define SIDE_STATIC      2
 #define SIDE_BREATH      3
 #define SIDE_OFF         4
+#define SIDE_MODE_DEFAULT   SIDE_OFF
 
 #define LIGHT_COLOUR_MAX 8
 #define SIDE_COLOUR_MAX  8
@@ -57,7 +58,7 @@ const uint8_t side_led_index_tab[SIDE_LINE][2] =
         {SIDE_INDEX + 0, SIDE_INDEX + 9},
 };
 
-uint8_t side_mode           = 0;
+uint8_t side_mode           = SIDE_MODE_DEFAULT;
 uint8_t side_light          = 3;
 uint8_t side_speed          = 2;
 uint8_t side_rgb            = 1;
@@ -823,7 +824,7 @@ void device_reset_show(void)
  */
 void device_reset_init(void)
 {
-    side_mode       = 0;
+    side_mode       = SIDE_MODE_DEFAULT;
     side_light      = 3;
     side_speed      = 2;
     side_rgb        = 1;

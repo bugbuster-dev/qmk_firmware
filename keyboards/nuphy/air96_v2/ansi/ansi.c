@@ -880,6 +880,33 @@ bool rgb_matrix_indicators_user(void)
     return true;
 }
 
+
+#define MAX_RGB_INDEX    110
+
+// rgb matrix buffer set from host
+typedef struct rgb_maxtrix_host_buffer_t {
+    struct {
+        uint8_t duration;
+        uint8_t r; // todo bb: store 4 bits, value diff around 15 not distinguishable
+        uint8_t g;
+        uint8_t b;
+    } led[MAX_RGB_INDEX];
+} rgb_maxtrix_host_buffer_t;
+
+static rgb_maxtrix_host_buffer_t rgb_matrix_host_buf;
+
+
+// show rgb matrix set by user on host side
+void rgb_matrix_host_show(void)
+{
+    for (uint8_t li = 0; li < MAX_RGB_INDEX; li++) {
+        if (rgb_matrix_host_buf.led[li].duration > 0) {
+            rgb_matrix_set_color(li, rgb_matrix_host_buf.led[li].r, rgb_matrix_host_buf.led[li].g, rgb_matrix_host_buf.led[li].b);
+            rgb_matrix_host_buf.led[li].duration--;
+        }
+    }
+}
+
 /**
    housekeeping_task_user
  */
@@ -899,5 +926,48 @@ void housekeeping_task_user(void)
 
     m_side_led_show(keyb_indicator_config);
 
+    rgb_matrix_host_show();
+
     Sleep_Handle();
+}
+
+
+
+#define VIRTSER_BUF_SIZE 768
+static struct virtser_buf
+{
+    uint8_t buf[VIRTSER_BUF_SIZE];
+    uint16_t pos;
+} virtser_buf = {0};
+
+
+void virtser_process_buf(void)
+{
+    for (uint16_t i = 0; i < VIRTSER_BUF_SIZE;) {
+        uint8_t li = virtser_buf.buf[i++];
+        if (li < MAX_RGB_INDEX) {
+            rgb_matrix_host_buf.led[li].duration = virtser_buf.buf[i++];
+            rgb_matrix_host_buf.led[li].r = virtser_buf.buf[i++];
+            rgb_matrix_host_buf.led[li].g = virtser_buf.buf[i++];
+            rgb_matrix_host_buf.led[li].b = virtser_buf.buf[i++];
+        }
+        else
+            break;
+    }
+}
+
+void virtser_recv(uint8_t c)
+{
+    if (c == 0xfe) {
+        if (virtser_buf.pos > 0 && virtser_buf.buf[virtser_buf.pos-1] == 0xef) {
+            virtser_buf.pos = 0;
+            return;
+        }
+    }
+
+    virtser_buf.buf[virtser_buf.pos++] = c;
+    if (virtser_buf.pos >= VIRTSER_BUF_SIZE) {
+        virtser_process_buf();
+        virtser_buf.pos = 0;
+    }
 }
