@@ -18,6 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ansi.h"
 #include "usb_main.h"
 
+#include "virtser.h"
+#include "firmata/Firmata_QMK.h"
+
 
 #define RF_LONG_PRESS_DELAY   30
 #define DEV_RESET_PRESS_DELAY 30
@@ -464,7 +467,7 @@ void m_power_on_dial_sw_scan(void)
  */
 bool process_keyb_indicator_config_input(uint16_t keycode, keyb_indicator_config_input_t* config_input)
 {
-#ifdef CONSOLE_ENABLE
+#ifndef NO_DEBUG
     dprintf("[keyb ind]: state=%d, key=%d\n", config_input->input_state, keycode);
 #endif
 
@@ -507,7 +510,7 @@ bool process_keyb_indicator_config_input(uint16_t keycode, keyb_indicator_config
             config_input->rgb = 0;
 
             if (config_input->rgb_index > 2) {
-                #ifdef CONSOLE_ENABLE
+                #ifndef NO_DEBUG
                 {
                     const uint8_t* rgb = keyb_indicator_config[config_input->indicator-1].rgb;
                     dprintf("[keyb ind]: indicator=%d,%d rgb=%d,%d,%d\n", config_input->indicator
@@ -867,6 +870,8 @@ void keyboard_post_init_user(void)
     m_break_all_key();
     m_londing_eeprom_data();
     m_power_on_dial_sw_scan();
+
+    firmata_initialize("Nuphy Firmata");
 }
 
 /**
@@ -907,6 +912,8 @@ void rgb_matrix_host_show(void)
     }
 }
 
+
+
 /**
    housekeeping_task_user
  */
@@ -928,12 +935,21 @@ void housekeeping_task_user(void)
 
     rgb_matrix_host_show();
 
+    firmata_process();
+
     Sleep_Handle();
 }
 
 
+//------------------------------------------------------------------------------
+
+#define RGB_MATRIX_HOST_ENABLE  0
+#define VIRTSER_FIRMATA         1
+
+#if RGB_MATRIX_HOST_ENABLE
 
 #define VIRTSER_BUF_SIZE 768
+//#define VIRTSER_BUF_SIZE 64
 static struct virtser_buf
 {
     uint8_t buf[VIRTSER_BUF_SIZE];
@@ -954,10 +970,19 @@ void virtser_process_buf(void)
         else
             break;
     }
+    //virtser_send('X');
 }
+#endif
+
 
 void virtser_recv(uint8_t c)
 {
+#if VIRTSER_FIRMATA
+    firmata_recv(c);
+#endif
+
+#if RGB_MATRIX_HOST_ENABLE
+    // start rgb matrix data message
     if (c == 0xfe) {
         if (virtser_buf.pos > 0 && virtser_buf.buf[virtser_buf.pos-1] == 0xef) {
             virtser_buf.pos = 0;
@@ -970,4 +995,5 @@ void virtser_recv(uint8_t c)
         virtser_process_buf();
         virtser_buf.pos = 0;
     }
+#endif
 }

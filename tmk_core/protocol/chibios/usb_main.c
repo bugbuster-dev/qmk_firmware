@@ -358,7 +358,7 @@ typedef struct {
 typedef struct {
     union {
         struct {
-#ifdef CONSOLE_ENABLE
+#if defined(CONSOLE_ENABLE) && !defined(VIRTSER_ENABLE)
             usb_driver_config_t console_driver;
 #endif
 #ifdef RAW_ENABLE
@@ -376,7 +376,7 @@ typedef struct {
 } usb_driver_configs_t;
 
 static usb_driver_configs_t drivers = {
-#ifdef CONSOLE_ENABLE
+#if defined(CONSOLE_ENABLE) && !defined(VIRTSER_ENABLE)
 #    define CONSOLE_IN_CAPACITY 4
 #    define CONSOLE_OUT_CAPACITY 4
 #    define CONSOLE_IN_MODE USB_EP_MODE_TYPE_INTR
@@ -951,6 +951,17 @@ void send_digitizer(report_digitizer_t *report) {
 
 #ifdef CONSOLE_ENABLE
 
+#ifdef VIRTSER_ENABLE
+
+int8_t sendchar(uint8_t c) {
+    return sendchar_virtser(c);
+}
+
+void console_task(void) {
+}
+
+#else
+
 int8_t sendchar(uint8_t c) {
     static bool timed_out = false;
     /* The `timed_out` state is an approximation of the ideal `is_listener_disconnected?` state.
@@ -997,6 +1008,8 @@ void console_task(void) {
         }
     } while (size > 0);
 }
+
+#endif
 
 #endif /* CONSOLE_ENABLE */
 

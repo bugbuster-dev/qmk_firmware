@@ -32,7 +32,8 @@ OPT ?= s
 
 # Compiler flag to set the C and C++ language standard level
 CSTANDARD = -std=gnu11
-CXXSTANDARD = -std=gnu++14
+#CXXSTANDARD = -std=gnu++14
+CXXSTANDARD = -std=gnu++17
 
 # Speed up recompilations by opt-in usage of ccache
 USE_CCACHE ?= no
@@ -93,6 +94,8 @@ CXXFLAGS += -Wundef
 ifneq ($(strip $(ALLOW_WARNINGS)), yes)
     CXXFLAGS += -Werror
 endif
+
+CXXFLAGS += $(CXXSTANDARD)
 
 #---------------- Assembler Options ----------------
 
