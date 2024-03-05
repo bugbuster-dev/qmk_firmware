@@ -16,7 +16,7 @@
 //******************************************************************************
 
 #include "Firmata.h"
-#include "HardwareSerial.h"
+//#include "HardwareSerial.h"
 
 #include <string.h>
 #include <stdlib.h>

@@ -857,6 +857,13 @@ void m_londing_eeprom_data(void)
 }
 
 
+void rgb_maxtrix_command_process(uint8_t cmd, uint8_t len, uint8_t *buf);
+
+void firmata_sysex_handler(uint8_t cmd, uint8_t len, uint8_t *buf)
+{
+    if (cmd == RGB_MATRIX_CMD) rgb_maxtrix_command_process(cmd, len, buf);
+}
+
 /**
  *   qmk keyboard post init
  */
@@ -872,6 +879,7 @@ void keyboard_post_init_user(void)
     m_power_on_dial_sw_scan();
 
     firmata_initialize("Nuphy Firmata");
+    firmata_attach(RGB_MATRIX_CMD, firmata_sysex_handler);
 }
 
 /**
@@ -896,6 +904,8 @@ typedef struct rgb_maxtrix_host_buffer_t {
         uint8_t g;
         uint8_t b;
     } led[MAX_RGB_INDEX];
+
+    bool written;
 } rgb_maxtrix_host_buffer_t;
 
 static rgb_maxtrix_host_buffer_t rgb_matrix_host_buf;
@@ -904,14 +914,40 @@ static rgb_maxtrix_host_buffer_t rgb_matrix_host_buf;
 // show rgb matrix set by user on host side
 void rgb_matrix_host_show(void)
 {
+    if (!rgb_matrix_host_buf.written) return;
+
+    bool matrix_set = 0;
     for (uint8_t li = 0; li < MAX_RGB_INDEX; li++) {
         if (rgb_matrix_host_buf.led[li].duration > 0) {
             rgb_matrix_set_color(li, rgb_matrix_host_buf.led[li].r, rgb_matrix_host_buf.led[li].g, rgb_matrix_host_buf.led[li].b);
             rgb_matrix_host_buf.led[li].duration--;
+            matrix_set = 1;
         }
     }
+
+    if (!matrix_set) rgb_matrix_host_buf.written = 0;
 }
 
+
+void rgb_maxtrix_command_process(uint8_t cmd, uint8_t len, uint8_t *buf)
+{
+    //dprintf("rgb:%d(%d):%d,%d,%d\n", buf[0], buf[1], buf[2], buf[3], buf[4]);
+    for (uint16_t i = 0; i < len;) {
+        //dprintf("rgb:%d(%d):%d,%d,%d\n", buf[i], buf[i+1], buf[i+2], buf[i+3], buf[i+4]);
+        uint8_t li = buf[i++];
+        //if (li == 99) dprintf("rgb:%d(%d):%d,%d,%d\n", buf[i-1], buf[i], buf[i+1], buf[i+2], buf[i+3]);
+        if (li < MAX_RGB_INDEX) {
+            rgb_matrix_host_buf.led[li].duration = buf[i++];
+            rgb_matrix_host_buf.led[li].r = buf[i++];
+            rgb_matrix_host_buf.led[li].g = buf[i++];
+            rgb_matrix_host_buf.led[li].b = buf[i++];
+
+            rgb_matrix_host_buf.written = 1;
+        }
+        else
+            break;
+    }
+}
 
 
 /**
@@ -919,6 +955,17 @@ void rgb_matrix_host_show(void)
  */
 void housekeeping_task_user(void)
 {
+#if NUPHY_TASK_USER_TIME_MEASURE
+    static uint32_t task_user_counter = 0;
+    static uint32_t task_user_total_time = 0;
+    uint32_t time_start = timer_read32();
+    if (task_user_counter++ == 10000) {
+        dprintf("[task_user] timer=%ld, total time=%ld\n", time_start, task_user_total_time);
+        task_user_counter = 0;
+        task_user_total_time = 0;
+    }
+#endif
+
     timer_pro();
 
     uart_receive_pro();
@@ -936,6 +983,10 @@ void housekeeping_task_user(void)
     rgb_matrix_host_show();
 
     firmata_process();
+
+#if NUPHY_TASK_USER_TIME_MEASURE
+    task_user_total_time +=  timer_read32() - time_start;
+#endif
 
     Sleep_Handle();
 }
@@ -978,7 +1029,9 @@ void virtser_process_buf(void)
 void virtser_recv(uint8_t c)
 {
 #if VIRTSER_FIRMATA
-    firmata_recv(c);
+    if (firmata_recv(c) < 0) {
+        dprintf("[E] firmata recv buffer overflow!\n");
+    }
 #endif
 
 #if RGB_MATRIX_HOST_ENABLE

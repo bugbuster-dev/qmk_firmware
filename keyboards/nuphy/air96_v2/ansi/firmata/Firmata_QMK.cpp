@@ -8,8 +8,8 @@ extern "C" {
 
 // todo bb: implement virtser Stream
 
-#define RX_BUFFER_SIZE 128
-#define TX_BUFFER_SIZE 128
+#define RX_BUFFER_SIZE 256
+#define TX_BUFFER_SIZE 256
 
 typedef uint16_t tx_buffer_index_t;
 typedef uint16_t rx_buffer_index_t;
@@ -56,16 +56,22 @@ public:
         flush();
 
         // clear any received data
-        _rx_buffer_head = _rx_buffer_tail;
+        _rx_buffer_head = _rx_buffer_tail = 0;
     }
 
-    void received(uint8_t c) {
+    // received byte insert at head
+    int received(uint8_t c) {
         rx_buffer_index_t i = (_rx_buffer_head + 1) % RX_BUFFER_SIZE;
         _rx_buffer[_rx_buffer_head] = c;
         _rx_buffer_head = i;
+
+        if (_rx_buffer_head == _rx_buffer_tail) return -1;
+
+        return 1;
     }
 
-    virtual int available(void) { return ((unsigned int)(RX_BUFFER_SIZE + _rx_buffer_head - _rx_buffer_tail)) % RX_BUFFER_SIZE; }
+    //virtual int available(void) { return ((unsigned int)(RX_BUFFER_SIZE + _rx_buffer_head - _rx_buffer_tail)) % RX_BUFFER_SIZE; }
+    virtual int available(void) { if (_rx_buffer_head != _rx_buffer_tail) return 1; return 0; }
 
     virtual int peek(void) {
         if (_rx_buffer_head == _rx_buffer_tail) {
@@ -75,6 +81,7 @@ public:
         }
     }
 
+    // read from tail
     virtual int read(void) {
         // if the head isn't ahead of the tail, we don't have any characters
         if (_rx_buffer_head == _rx_buffer_tail) {
@@ -82,6 +89,10 @@ public:
         } else {
             unsigned char c = _rx_buffer[_rx_buffer_tail];
             _rx_buffer_tail = (rx_buffer_index_t)(_rx_buffer_tail + 1) % RX_BUFFER_SIZE;
+            if (_rx_buffer_tail == _rx_buffer_head) {
+                _rx_buffer_head = 0;
+                _rx_buffer_tail = 0;
+            }
             return c;
         }
     }
@@ -161,6 +172,11 @@ void firmata_begin() {
     g_firmata_started = 1;
 }
 
+void firmata_attach(uint8_t cmd, sysexCallbackFunction newFunction) {
+    g_firmata.attach(cmd, newFunction);
+}
+
+
 void firmata_send_command(int command, const unsigned char* data, int length) {
     if (!g_firmata_started) return;
 
@@ -173,28 +189,23 @@ void firmata_send_command(int command, const unsigned char* data, int length) {
     g_firmata.endSysex();
 }
 
-void firmata_recv(uint8_t c) {
+int firmata_recv(uint8_t c) {
     if (!g_firmata_started) {
         firmata_begin();
-#if 0
-        static uint8_t firmata_begin_sequence[] = "firmata";
-        static uint8_t begin_index = 0;
-
-        if (c == firmata_begin_sequence[begin_index]) begin_index++;
-        else begin_index = 0;
-
-        if (begin_index == sizeof(firmata_begin_sequence))
-            firmata_begin();
-#endif
     }
 
-    g_virtser_stream.received(c);
+    return g_virtser_stream.received(c);
 }
 
 void firmata_process() {
     if (!g_firmata_started) return;
 
-    g_firmata.processInput();
+    const uint8_t max_iterations = 100;
+    uint8_t n = 0;
+    while (g_firmata.available()) {
+        g_firmata.processInput();
+        if (n++ >= max_iterations) break;
+    }
 
     if (g_console_stream.tx_eol()) {
         g_console_stream._tx_buffer[g_console_stream._tx_buffer_head] = 0;
