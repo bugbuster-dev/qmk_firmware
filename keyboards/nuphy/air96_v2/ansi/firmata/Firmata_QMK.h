@@ -6,7 +6,11 @@ extern "C" {
 #endif
 
 enum {
-  RGB_MATRIX_CMD = 0x01
+    SYSEX_RGB_MATRIX_CMD    = 1,
+    SYSEX_DEFAULT_LAYER_SET = 2,
+    SYSEX_DEBUG_MASK_SET = 3,
+
+    SYSEX_CMD_EXTENDED = 0xff
 };
 
 typedef void (*sysexCallbackFunction)(uint8_t command, uint8_t argc, uint8_t *argv);

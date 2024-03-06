@@ -72,4 +72,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define RGB_MATRIX_DEFAULT_MODE         RGB_MATRIX_SOLID_REACTIVE_WIDE
 #define RGB_MATRIX_NUPHY_DEFAULT_HSV    170,255,RGB_MATRIX_MAXIMUM_BRIGHTNESS-RGB_MATRIX_VAL_STEP*2
 
+//------------------------------------------------------------------------------
+
+#define VIRTSER_FIRMATA         1
 //#define NUPHY_TASK_USER_TIME_MEASURE 1

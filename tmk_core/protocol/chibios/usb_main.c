@@ -358,7 +358,7 @@ typedef struct {
 typedef struct {
     union {
         struct {
-#if defined(CONSOLE_ENABLE) && !defined(VIRTSER_ENABLE)
+#if defined(CONSOLE_ENABLE) && !defined(CONSOLE_VIRTSER)
             usb_driver_config_t console_driver;
 #endif
 #ifdef RAW_ENABLE
@@ -376,7 +376,7 @@ typedef struct {
 } usb_driver_configs_t;
 
 static usb_driver_configs_t drivers = {
-#if defined(CONSOLE_ENABLE) && !defined(VIRTSER_ENABLE)
+#if defined(CONSOLE_ENABLE) && !defined(CONSOLE_VIRTSER)
 #    define CONSOLE_IN_CAPACITY 4
 #    define CONSOLE_OUT_CAPACITY 4
 #    define CONSOLE_IN_MODE USB_EP_MODE_TYPE_INTR

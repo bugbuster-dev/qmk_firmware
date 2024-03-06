@@ -408,7 +408,7 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM RawReport[] = {
 };
 #endif
 
-#if defined(CONSOLE_ENABLE) && !defined(VIRTSER_ENABLE) // todo bb: CONSOLE_VIRTSER
+#if defined(CONSOLE_ENABLE) && !defined(CONSOLE_VIRTSER)
 const USB_Descriptor_HIDReport_Datatype_t PROGMEM ConsoleReport[] = {
     HID_RI_USAGE_PAGE(16, 0xFF31), // Vendor Defined (PJRC Teensy compatible)
     HID_RI_USAGE(8, 0x74),         // Vendor Defined (PJRC Teensy compatible)

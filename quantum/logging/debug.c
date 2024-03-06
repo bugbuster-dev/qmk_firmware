@@ -21,5 +21,6 @@ debug_config_t debug_config = {
     .matrix   = false, //
     .keyboard = false, //
     .mouse    = false, //
+    .via      = false,
     .reserved = 0      //
 };

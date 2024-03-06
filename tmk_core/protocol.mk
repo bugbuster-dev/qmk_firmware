@@ -37,6 +37,10 @@ ifeq ($(strip $(RAW_ENABLE)), yes)
     OPT_DEFS += -DRAW_ENABLE
 endif
 
+ifeq ($(strip $(CONSOLE_VIRTSER)), yes)
+    OPT_DEFS += -DCONSOLE_VIRTSER
+endif
+
 ifeq ($(strip $(CONSOLE_ENABLE)), yes)
     OPT_DEFS += -DCONSOLE_ENABLE
 else

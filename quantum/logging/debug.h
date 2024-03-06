@@ -33,6 +33,7 @@ typedef union {
         bool    matrix : 1;
         bool    keyboard : 1;
         bool    mouse : 1;
+        bool    via : 1;
         uint8_t reserved : 4;
     };
     uint8_t raw;

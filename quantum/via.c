@@ -22,6 +22,7 @@
 #    error "DYNAMIC_KEYMAP_ENABLE is not enabled"
 #endif
 
+#include "debug.h"
 #include "via.h"
 
 #include "raw_hid.h"
@@ -285,6 +286,16 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
     if (via_command_kb(data, length)) {
         return;
     }
+
+#ifdef CONSOLE_ENABLE
+    if (debug_config.via) {
+        dprintf("[via] ");
+        for (int i = 0; i < length; i++) {
+            dprintf("%02x ", data[i]);
+        }
+        dprintf("\n");
+    }
+#endif
 
     switch (*command_id) {
         case id_get_protocol_version: {

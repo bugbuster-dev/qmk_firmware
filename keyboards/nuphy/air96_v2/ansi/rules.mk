@@ -10,4 +10,5 @@ SRC += firmata/Print.cpp
 QUANTUM_LIB_SRC += uart.c
 
 CONSOLE_ENABLE = yes
+CONSOLE_VIRTSER = yes
 VIRTSER_ENABLE = yes

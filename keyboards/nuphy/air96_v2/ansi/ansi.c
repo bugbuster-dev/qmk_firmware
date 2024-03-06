@@ -467,9 +467,7 @@ void m_power_on_dial_sw_scan(void)
  */
 bool process_keyb_indicator_config_input(uint16_t keycode, keyb_indicator_config_input_t* config_input)
 {
-#ifndef NO_DEBUG
     dprintf("[keyb ind]: state=%d, key=%d\n", config_input->input_state, keycode);
-#endif
 
     if (keycode == KC_ESC) {
         memset(config_input, 0, sizeof(keyb_indicator_config_input_t));
@@ -510,15 +508,13 @@ bool process_keyb_indicator_config_input(uint16_t keycode, keyb_indicator_config
             config_input->rgb = 0;
 
             if (config_input->rgb_index > 2) {
-                #ifndef NO_DEBUG
                 {
-                    const uint8_t* rgb = keyb_indicator_config[config_input->indicator-1].rgb;
+                    const uint8_t* rgb = keyb_indicator_config[config_input->indicator-1].rgb; (void)rgb;
                     dprintf("[keyb ind]: indicator=%d,%d rgb=%d,%d,%d\n", config_input->indicator
                                                         , config_input->indicator_select
                                                         , rgb[0], rgb[1], rgb[2]
                                                         );
                 }
-                #endif
 
                 memset(config_input, 0, sizeof(keyb_indicator_config_input_t));
                 return true;
@@ -857,11 +853,16 @@ void m_londing_eeprom_data(void)
 }
 
 
-void rgb_maxtrix_command_process(uint8_t cmd, uint8_t len, uint8_t *buf);
+void sysex_rgb_maxtrix_command_process  (uint8_t cmd, uint8_t len, uint8_t *buf);
+void sysex_default_layer_set            (uint8_t cmd, uint8_t len, uint8_t *buf);
+void sysex_debug_mask_set               (uint8_t cmd, uint8_t len, uint8_t *buf);
+
 
 void firmata_sysex_handler(uint8_t cmd, uint8_t len, uint8_t *buf)
 {
-    if (cmd == RGB_MATRIX_CMD) rgb_maxtrix_command_process(cmd, len, buf);
+    if (cmd == SYSEX_RGB_MATRIX_CMD)    sysex_rgb_maxtrix_command_process(cmd, len, buf);
+    if (cmd == SYSEX_DEFAULT_LAYER_SET) sysex_default_layer_set(cmd, len, buf);
+    if (cmd == SYSEX_DEBUG_MASK_SET)    sysex_debug_mask_set(cmd, len, buf);
 }
 
 /**
@@ -879,7 +880,7 @@ void keyboard_post_init_user(void)
     m_power_on_dial_sw_scan();
 
     firmata_initialize("Nuphy Firmata");
-    firmata_attach(RGB_MATRIX_CMD, firmata_sysex_handler);
+    firmata_attach(0, firmata_sysex_handler);
 }
 
 /**
@@ -897,7 +898,7 @@ bool rgb_matrix_indicators_user(void)
 #define MAX_RGB_INDEX    110
 
 // rgb matrix buffer set from host
-typedef struct rgb_maxtrix_host_buffer_t {
+typedef struct rgb_matrix_host_buffer_t {
     struct {
         uint8_t duration;
         uint8_t r; // todo bb: store 4 bits, value diff around 15 not distinguishable
@@ -906,9 +907,9 @@ typedef struct rgb_maxtrix_host_buffer_t {
     } led[MAX_RGB_INDEX];
 
     bool written;
-} rgb_maxtrix_host_buffer_t;
+} rgb_matrix_host_buffer_t;
 
-static rgb_maxtrix_host_buffer_t rgb_matrix_host_buf;
+static rgb_matrix_host_buffer_t rgb_matrix_host_buf;
 
 
 // show rgb matrix set by user on host side
@@ -929,13 +930,11 @@ void rgb_matrix_host_show(void)
 }
 
 
-void rgb_maxtrix_command_process(uint8_t cmd, uint8_t len, uint8_t *buf)
+void sysex_rgb_maxtrix_command_process(uint8_t cmd, uint8_t len, uint8_t *buf)
 {
-    //dprintf("rgb:%d(%d):%d,%d,%d\n", buf[0], buf[1], buf[2], buf[3], buf[4]);
     for (uint16_t i = 0; i < len;) {
         //dprintf("rgb:%d(%d):%d,%d,%d\n", buf[i], buf[i+1], buf[i+2], buf[i+3], buf[i+4]);
         uint8_t li = buf[i++];
-        //if (li == 99) dprintf("rgb:%d(%d):%d,%d,%d\n", buf[i-1], buf[i], buf[i+1], buf[i+2], buf[i+3]);
         if (li < MAX_RGB_INDEX) {
             rgb_matrix_host_buf.led[li].duration = buf[i++];
             rgb_matrix_host_buf.led[li].r = buf[i++];
@@ -949,6 +948,19 @@ void rgb_maxtrix_command_process(uint8_t cmd, uint8_t len, uint8_t *buf)
     }
 }
 
+void sysex_default_layer_set(uint8_t cmd, uint8_t len, uint8_t *buf)
+{
+    dprintf("[L]%d\n", buf[0]);
+    layer_state_t state = 1 << buf[0];
+    default_layer_set(state);
+}
+
+
+void sysex_debug_mask_set(uint8_t cmd, uint8_t len, uint8_t *buf)
+{
+    debug_config = (debug_config_t) buf[0];
+    dprintf("[D]%02x\n", buf[0]);
+}
 
 /**
    housekeeping_task_user
@@ -991,62 +1003,13 @@ void housekeeping_task_user(void)
     Sleep_Handle();
 }
 
-
 //------------------------------------------------------------------------------
-
-#define RGB_MATRIX_HOST_ENABLE  0
-#define VIRTSER_FIRMATA         1
-
-#if RGB_MATRIX_HOST_ENABLE
-
-#define VIRTSER_BUF_SIZE 768
-//#define VIRTSER_BUF_SIZE 64
-static struct virtser_buf
-{
-    uint8_t buf[VIRTSER_BUF_SIZE];
-    uint16_t pos;
-} virtser_buf = {0};
-
-
-void virtser_process_buf(void)
-{
-    for (uint16_t i = 0; i < VIRTSER_BUF_SIZE;) {
-        uint8_t li = virtser_buf.buf[i++];
-        if (li < MAX_RGB_INDEX) {
-            rgb_matrix_host_buf.led[li].duration = virtser_buf.buf[i++];
-            rgb_matrix_host_buf.led[li].r = virtser_buf.buf[i++];
-            rgb_matrix_host_buf.led[li].g = virtser_buf.buf[i++];
-            rgb_matrix_host_buf.led[li].b = virtser_buf.buf[i++];
-        }
-        else
-            break;
-    }
-    //virtser_send('X');
-}
-#endif
-
 
 void virtser_recv(uint8_t c)
 {
 #if VIRTSER_FIRMATA
     if (firmata_recv(c) < 0) {
-        dprintf("[E] firmata recv buffer overflow!\n");
-    }
-#endif
-
-#if RGB_MATRIX_HOST_ENABLE
-    // start rgb matrix data message
-    if (c == 0xfe) {
-        if (virtser_buf.pos > 0 && virtser_buf.buf[virtser_buf.pos-1] == 0xef) {
-            virtser_buf.pos = 0;
-            return;
-        }
-    }
-
-    virtser_buf.buf[virtser_buf.pos++] = c;
-    if (virtser_buf.pos >= VIRTSER_BUF_SIZE) {
-        virtser_process_buf();
-        virtser_buf.pos = 0;
+        dprintf("[E] firmata_recv\n");
     }
 #endif
 }
