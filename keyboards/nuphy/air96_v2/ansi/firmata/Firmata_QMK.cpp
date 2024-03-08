@@ -150,7 +150,7 @@ public:
 
 static firmata::FirmataClass g_firmata;
 static bool g_firmata_started = 0;
-static BufferStream g_virtser_stream(virtser_send);
+static BufferStream g_virtser_stream(virtser_send_nonblock);
 static BufferStream g_console_stream(nullptr);
 
 extern "C" {

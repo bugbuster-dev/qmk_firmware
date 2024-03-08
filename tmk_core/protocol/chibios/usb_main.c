@@ -1072,6 +1072,14 @@ void virtser_send(const uint8_t byte) {
     chnWrite(&drivers.serial_driver.driver, &byte, 1);
 }
 
+void virtser_send_nonblock(const uint8_t c) {
+    static bool virtser_timed_out = false;
+
+    const sysinterval_t timeout = virtser_timed_out ? TIME_IMMEDIATE : TIME_MS2I(5);
+    const size_t        result  = chnWriteTimeout(&drivers.serial_driver.driver, &c, 1, timeout);
+    virtser_timed_out   = (result == 0);
+}
+
 __attribute__((weak)) void virtser_recv(uint8_t c) {
     // Ignore by default
 }
