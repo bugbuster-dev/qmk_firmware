@@ -20,8 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdbool.h>
 #include "print.h"
 
+
 #ifdef __cplusplus
 extern "C" {
+#define _Static_assert static_assert
 #endif
 
 /*
@@ -34,10 +36,13 @@ typedef union {
         bool    keyboard : 1;
         bool    mouse : 1;
         bool    via : 1;
-        uint8_t reserved : 4;
+        uint8_t reserved : 3;
     };
     uint8_t raw;
 } debug_config_t;
+
+_Static_assert(sizeof(debug_config_t) == sizeof(((debug_config_t*)0)->raw), "debug_config_t out of spec.");
+// TODO: check all data structures written to eeprom to compile time check its size specification
 
 extern debug_config_t debug_config;
 

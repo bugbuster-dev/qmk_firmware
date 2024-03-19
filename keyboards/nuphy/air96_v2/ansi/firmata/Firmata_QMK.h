@@ -5,13 +5,44 @@
 extern "C" {
 #endif
 
-enum {
-    SYSEX_RGB_MATRIX_CMD    = 1,
-    SYSEX_DEFAULT_LAYER_SET = 2,
-    SYSEX_DEBUG_MASK_SET = 3,
+#define FIRMATA_QMK_MAJOR_VERSION   0
+#define FIRMATA_QMK_MINOR_VERSION   1
 
-    SYSEX_CMD_EXTENDED = 0xff
+void firmata_sysex_handler(uint8_t cmd, uint8_t len, uint8_t *buf);
+
+void _process_cmd_set_rgb_maxtrix_buf   (uint8_t cmd, uint8_t len, uint8_t *buf);
+
+void _process_cmd_set_default_layer     (uint8_t cmd, uint8_t len, uint8_t *buf);
+void _process_cmd_get_default_layer     (uint8_t cmd, uint8_t len, uint8_t *buf);
+
+void _process_cmd_set_debug_mask        (uint8_t cmd, uint8_t len, uint8_t *buf);
+void _process_cmd_get_debug_mask        (uint8_t cmd, uint8_t len, uint8_t *buf);
+
+void _process_cmd_set_macwin_mode       (uint8_t cmd, uint8_t len, uint8_t *buf);
+void _process_cmd_get_macwin_mode       (uint8_t cmd, uint8_t len, uint8_t *buf);
+
+void _process_cmd_get_battery_status    (uint8_t cmd, uint8_t len, uint8_t *buf);
+
+enum {
+    FRMT_CMD_RESPONSE = 0,
+    FRMT_CMD_SET = 1,
+    FRMT_CMD_GET = 2,
+    FRMT_CMD_ADD = 3,
+    FRMT_CMD_DEL = 4,
+    FRMT_CMD_PUB = 5,
+    FRMT_CMD_SUB = 6,
+
+    FRMT_CMD_EXTENDED = 0xff
 };
+
+enum {
+    FRMT_ID_RGB_MATRIX_BUF  = 1,
+    FRMT_ID_DEFAULT_LAYER   = 2,
+    FRMT_ID_DEBUG_MASK      = 3,
+    FRMT_ID_BATTERY_STATUS  = 4, //todo bb: link status, battery status,
+    FRMT_ID_MACWIN_MODE     = 5,
+};
+
 
 typedef void (*sysexCallbackFunction)(uint8_t command, uint8_t argc, uint8_t *argv);
 
@@ -22,7 +53,7 @@ void firmata_begin(void);
 void firmata_attach(uint8_t cmd, sysexCallbackFunction newFunction);
 
 int firmata_recv(uint8_t c);
-void firmata_send_command(int command, const unsigned char* data, int length);
+void firmata_send_sysex(uint8_t cmd, uint8_t* data, int len);
 
 void firmata_process(void);
 

@@ -56,6 +56,8 @@ bool f_dev_reset_press  = 0;
 bool f_rgb_test_press   = 0;
 bool f_bat_num_show     = 0;
 bool f_keyb_indicator_config  = 0;
+bool f_macwin_ignore_switch = 0;
+
 
 uint8_t host_mode;
 host_driver_t *m_host_driver   = 0;
@@ -356,21 +358,23 @@ void dial_sw_scan(void)
         }
     }
 
-    if (dial_scan & 0x02) {
-        if (dev_info.sys_sw_state != SYS_SW_MAC) {
-            f_sys_show = 1;
-            default_layer_set(1 << 0);
-            dev_info.sys_sw_state = SYS_SW_MAC;
-            keymap_config.nkro    = 0;
-            m_break_all_key();
-        }
-    } else {
-        if (dev_info.sys_sw_state != SYS_SW_WIN) {
-            f_sys_show = 1;
-            default_layer_set(1 << 2);
-            dev_info.sys_sw_state = SYS_SW_WIN;
-            keymap_config.nkro    = 1;
-            m_break_all_key();
+    if (f_macwin_ignore_switch == 0) {
+        if (dial_scan & 0x02) {
+            if (dev_info.sys_sw_state != SYS_SW_MAC) {
+                f_sys_show = 1;
+                default_layer_set(1 << 0);
+                dev_info.sys_sw_state = SYS_SW_MAC;
+                keymap_config.nkro    = 0;
+                m_break_all_key();
+            }
+        } else {
+            if (dev_info.sys_sw_state != SYS_SW_WIN) {
+                f_sys_show = 1;
+                default_layer_set(1 << 2);
+                dev_info.sys_sw_state = SYS_SW_WIN;
+                keymap_config.nkro    = 1;
+                m_break_all_key();
+            }
         }
     }
 
@@ -841,7 +845,7 @@ void m_londing_eeprom_data(void)
         user_config.ee_side_speed           = side_speed;
         user_config.ee_side_rgb             = side_rgb;
         user_config.ee_side_colour          = side_colour;
-        user_config.sleep_enable            = true;
+        user_config.sleep_enable            = SLEEP_ENABLE_DEFAULT;
         eeconfig_update_user_datablock(&user_config);
     } else {
         side_mode   = user_config.ee_side_mode;
@@ -853,16 +857,24 @@ void m_londing_eeprom_data(void)
 }
 
 
-void sysex_rgb_maxtrix_command_process  (uint8_t cmd, uint8_t len, uint8_t *buf);
-void sysex_default_layer_set            (uint8_t cmd, uint8_t len, uint8_t *buf);
-void sysex_debug_mask_set               (uint8_t cmd, uint8_t len, uint8_t *buf);
-
-
 void firmata_sysex_handler(uint8_t cmd, uint8_t len, uint8_t *buf)
 {
-    if (cmd == SYSEX_RGB_MATRIX_CMD)    sysex_rgb_maxtrix_command_process(cmd, len, buf);
-    if (cmd == SYSEX_DEFAULT_LAYER_SET) sysex_default_layer_set(cmd, len, buf);
-    if (cmd == SYSEX_DEBUG_MASK_SET)    sysex_debug_mask_set(cmd, len, buf);
+    if (cmd == FRMT_CMD_SET) {
+        uint8_t id = buf[0];
+        buf++; len--;
+        if (id == FRMT_ID_RGB_MATRIX_BUF)   _process_cmd_set_rgb_maxtrix_buf(cmd, len, buf);
+        if (id == FRMT_ID_DEFAULT_LAYER)    _process_cmd_set_default_layer(cmd, len, buf);
+        if (id == FRMT_ID_DEBUG_MASK)       _process_cmd_set_debug_mask(cmd, len, buf);
+        if (id == FRMT_ID_MACWIN_MODE)      _process_cmd_set_macwin_mode(cmd, len, buf);
+    }
+    if (cmd == FRMT_CMD_GET) {
+        uint8_t id = buf[0];
+        buf++; len--;
+        if (id == FRMT_ID_DEFAULT_LAYER)    _process_cmd_get_default_layer(cmd, len, buf);
+        if (id == FRMT_ID_DEBUG_MASK)       _process_cmd_get_debug_mask(cmd, len, buf);
+        if (id == FRMT_ID_MACWIN_MODE)      _process_cmd_get_macwin_mode(cmd, len, buf);
+        if (id == FRMT_ID_BATTERY_STATUS)   _process_cmd_get_battery_status(cmd, len, buf);
+    }
 }
 
 /**
@@ -930,7 +942,7 @@ void rgb_matrix_host_show(void)
 }
 
 
-void sysex_rgb_maxtrix_command_process(uint8_t cmd, uint8_t len, uint8_t *buf)
+void _process_cmd_set_rgb_maxtrix_buf(uint8_t cmd, uint8_t len, uint8_t *buf)
 {
     for (uint16_t i = 0; i < len;) {
         //dprintf("rgb:%d(%d):%d,%d,%d\n", buf[i], buf[i+1], buf[i+2], buf[i+3], buf[i+4]);
@@ -948,19 +960,80 @@ void sysex_rgb_maxtrix_command_process(uint8_t cmd, uint8_t len, uint8_t *buf)
     }
 }
 
-void sysex_default_layer_set(uint8_t cmd, uint8_t len, uint8_t *buf)
+void _process_cmd_set_default_layer(uint8_t cmd, uint8_t len, uint8_t *buf)
 {
     dprintf("[L]%d\n", buf[0]);
     layer_state_t state = 1 << buf[0];
     default_layer_set(state);
 }
 
-
-void sysex_debug_mask_set(uint8_t cmd, uint8_t len, uint8_t *buf)
+void _process_cmd_set_debug_mask(uint8_t cmd, uint8_t len, uint8_t *buf)
 {
     debug_config = (debug_config_t) buf[0];
     dprintf("[D]%02x\n", buf[0]);
 }
+
+void _process_cmd_set_macwin_mode(uint8_t cmd, uint8_t len, uint8_t *buf)
+{
+    //dprintf("macwin %02x\n", buf[0]);
+    if ((buf[0] == 'm') && (dev_info.sys_sw_state != SYS_SW_MAC)) {
+        dprintf("mac\n");
+        f_macwin_ignore_switch = 1;
+        f_sys_show = 1;
+        default_layer_set(1 << 0);
+        dev_info.sys_sw_state = SYS_SW_MAC;
+        keymap_config.nkro    = 0;
+        m_break_all_key();
+    } else
+    if ((buf[0] == 'w') && (dev_info.sys_sw_state != SYS_SW_WIN)) {
+        dprintf("win\n");
+        f_macwin_ignore_switch = 1;
+        f_sys_show = 1;
+        default_layer_set(1 << 2);
+        dev_info.sys_sw_state = SYS_SW_WIN;
+        keymap_config.nkro    = 1;
+        m_break_all_key();
+    } else
+    if (buf[0] == '-') {
+        f_macwin_ignore_switch = 0;
+    }
+}
+
+void _process_cmd_get_default_layer(uint8_t cmd, uint8_t len, uint8_t *buf)
+{
+}
+
+void _process_cmd_get_debug_mask(uint8_t cmd, uint8_t len, uint8_t *buf)
+{
+    uint8_t response[2];
+    response[0] = FRMT_ID_DEBUG_MASK;
+    response[1] = *((uint8_t*)&debug_config);
+    firmata_send_sysex(FRMT_CMD_RESPONSE, response, sizeof(response));
+}
+
+void _process_cmd_get_macwin_mode(uint8_t cmd, uint8_t len, uint8_t *buf)
+{
+    uint8_t response[2];
+    response[0] = FRMT_ID_MACWIN_MODE;
+
+    response[1] = '-';
+    if (dev_info.sys_sw_state == SYS_SW_MAC)
+        response[1] = 'm';
+    if (dev_info.sys_sw_state == SYS_SW_WIN)
+        response[1] = 'w';
+
+    firmata_send_sysex(FRMT_CMD_RESPONSE, response, sizeof(response));
+}
+
+void _process_cmd_get_battery_status(uint8_t cmd, uint8_t len, uint8_t *buf)
+{
+    uint8_t response[3];
+    response[0] = FRMT_ID_BATTERY_STATUS;
+    response[1] = dev_info.rf_charge;
+    response[2] = dev_info.rf_baterry;
+    firmata_send_sysex(FRMT_CMD_RESPONSE, response, sizeof(response));
+}
+
 
 /**
    housekeeping_task_user

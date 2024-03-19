@@ -47,6 +47,7 @@ const
   // pin can only be 0-15, so chop higher bits
   FirmataStream->write(REPORT_ANALOG | (pin & 0xF));
   FirmataStream->write(stream_enable);
+  FirmataStream->flush();
 }
 
 /**
@@ -63,6 +64,7 @@ const
   if ( (Stream *)NULL == FirmataStream ) { return; }
   FirmataStream->write(REPORT_DIGITAL | (portNumber & 0xF));
   FirmataStream->write(stream_enable);
+  FirmataStream->flush();
 }
 
 /**
@@ -290,6 +292,7 @@ const
   FirmataStream->write(SET_DIGITAL_PIN_VALUE);
   FirmataStream->write(pin & 0x7F);
   FirmataStream->write(value != 0);
+  FirmataStream->flush();
 }
 
 
@@ -309,6 +312,7 @@ const
   // Tx bits  0-6 (protocol v1 and higher)
   // Tx bits 7-13 (bit 7 only for protocol v2 and higher)
   encodeByteStream(sizeof(portData), reinterpret_cast<uint8_t *>(&portData), sizeof(portData));
+  FirmataStream->flush();
 }
 
 /**
@@ -346,6 +350,7 @@ const
   FirmataStream->write(REPORT_VERSION);
   FirmataStream->write(major);
   FirmataStream->write(minor);
+  FirmataStream->flush();
 }
 
 /**
@@ -362,6 +367,7 @@ const
   FirmataStream->write(SET_PIN_MODE);
   FirmataStream->write(pin);
   FirmataStream->write(config);
+  FirmataStream->flush();
 }
 
 /**
@@ -423,6 +429,7 @@ void FirmataMarshaller::setSamplingInterval(uint16_t interval_ms)
 const
 {
   sendSysex(SAMPLING_INTERVAL, sizeof(interval_ms), reinterpret_cast<uint8_t *>(&interval_ms));
+  FirmataStream->flush();
 }
 
 /**
@@ -434,4 +441,5 @@ const
 {
   if ( (Stream *)NULL == FirmataStream ) { return; }
   FirmataStream->write(SYSTEM_RESET);
+  FirmataStream->flush();
 }

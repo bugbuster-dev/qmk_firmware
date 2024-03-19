@@ -6,8 +6,6 @@ extern "C" {
 }
 
 
-// todo bb: implement virtser Stream
-
 #define RX_BUFFER_SIZE 256
 #define TX_BUFFER_SIZE 256
 
@@ -163,7 +161,7 @@ int8_t sendchar_virtser(uint8_t c) {
 
 
 void firmata_initialize(const char* firmware) {
-    g_firmata.setFirmwareNameAndVersion(firmware, 0xa, 0x5);
+    g_firmata.setFirmwareNameAndVersion(firmware, FIRMATA_QMK_MAJOR_VERSION, FIRMATA_QMK_MINOR_VERSION);
     //g_firmata.begin(g_virtser_stream);
 }
 
@@ -177,16 +175,10 @@ void firmata_attach(uint8_t cmd, sysexCallbackFunction newFunction) {
 }
 
 
-void firmata_send_command(int command, const unsigned char* data, int length) {
+void firmata_send_sysex(uint8_t cmd, uint8_t* data, int len) {
     if (!g_firmata_started) return;
 
-    // Example: Sending a custom Sysex command
-    g_firmata.startSysex();
-    g_firmata.write(static_cast<uint8_t>(command));
-    for (int i = 0; i < length; ++i) {
-        g_firmata.sendValueAsTwo7bitBytes(data[i]);
-    }
-    g_firmata.endSysex();
+    g_firmata.sendSysex(cmd, len, data);
 }
 
 int firmata_recv(uint8_t c) {

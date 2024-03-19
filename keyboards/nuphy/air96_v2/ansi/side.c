@@ -847,7 +847,7 @@ void device_reset_init(void)
     user_config.ee_side_speed           = side_speed;
     user_config.ee_side_rgb             = side_rgb;
     user_config.ee_side_colour          = side_colour;
-    user_config.sleep_enable            = true;
+    user_config.sleep_enable            = SLEEP_ENABLE_DEFAULT;
     eeconfig_update_user_datablock(&user_config);
 }
 
