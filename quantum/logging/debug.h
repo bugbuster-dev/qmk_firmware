@@ -41,7 +41,8 @@ typedef union {
     uint8_t raw;
 } debug_config_t;
 
-_Static_assert(sizeof(debug_config_t) == sizeof(((debug_config_t*)0)->raw), "debug_config_t out of spec.");
+#define STATIC_ASSERT_SIZEOF_STRUCT_RAW(type, msg) _Static_assert(sizeof(type) == sizeof(((type*)0)->raw), msg)
+STATIC_ASSERT_SIZEOF_STRUCT_RAW(debug_config_t, "debug_config_t out of size spec.");
 // TODO: check all data structures written to eeprom to compile time check its size specification
 
 extern debug_config_t debug_config;

@@ -862,10 +862,11 @@ void firmata_sysex_handler(uint8_t cmd, uint8_t len, uint8_t *buf)
     if (cmd == FRMT_CMD_SET) {
         uint8_t id = buf[0];
         buf++; len--;
-        if (id == FRMT_ID_RGB_MATRIX_BUF)   _process_cmd_set_rgb_maxtrix_buf(cmd, len, buf);
+        if (id == FRMT_ID_RGB_MATRIX_BUF)   _process_cmd_set_rgb_matrix_buf(cmd, len, buf);
         if (id == FRMT_ID_DEFAULT_LAYER)    _process_cmd_set_default_layer(cmd, len, buf);
         if (id == FRMT_ID_DEBUG_MASK)       _process_cmd_set_debug_mask(cmd, len, buf);
         if (id == FRMT_ID_MACWIN_MODE)      _process_cmd_set_macwin_mode(cmd, len, buf);
+        if (id == FRMT_ID_RGB_MATRIX_MODE)  _process_cmd_set_rgb_matrix_mode(cmd, len, buf);
     }
     if (cmd == FRMT_CMD_GET) {
         uint8_t id = buf[0];
@@ -874,6 +875,7 @@ void firmata_sysex_handler(uint8_t cmd, uint8_t len, uint8_t *buf)
         if (id == FRMT_ID_DEBUG_MASK)       _process_cmd_get_debug_mask(cmd, len, buf);
         if (id == FRMT_ID_MACWIN_MODE)      _process_cmd_get_macwin_mode(cmd, len, buf);
         if (id == FRMT_ID_BATTERY_STATUS)   _process_cmd_get_battery_status(cmd, len, buf);
+        if (id == FRMT_ID_RGB_MATRIX_MODE)  _process_cmd_get_rgb_matrix_mode(cmd, len, buf);
     }
 }
 
@@ -907,8 +909,6 @@ bool rgb_matrix_indicators_user(void)
 }
 
 
-#define MAX_RGB_INDEX    110
-
 // rgb matrix buffer set from host
 typedef struct rgb_matrix_host_buffer_t {
     struct {
@@ -916,7 +916,7 @@ typedef struct rgb_matrix_host_buffer_t {
         uint8_t r; // todo bb: store 4 bits, value diff around 15 not distinguishable
         uint8_t g;
         uint8_t b;
-    } led[MAX_RGB_INDEX];
+    } led[RGB_MATRIX_LED_COUNT];
 
     bool written;
 } rgb_matrix_host_buffer_t;
@@ -930,7 +930,7 @@ void rgb_matrix_host_show(void)
     if (!rgb_matrix_host_buf.written) return;
 
     bool matrix_set = 0;
-    for (uint8_t li = 0; li < MAX_RGB_INDEX; li++) {
+    for (uint8_t li = 0; li < RGB_MATRIX_LED_COUNT; li++) {
         if (rgb_matrix_host_buf.led[li].duration > 0) {
             rgb_matrix_set_color(li, rgb_matrix_host_buf.led[li].r, rgb_matrix_host_buf.led[li].g, rgb_matrix_host_buf.led[li].b);
             rgb_matrix_host_buf.led[li].duration--;
@@ -942,12 +942,12 @@ void rgb_matrix_host_show(void)
 }
 
 
-void _process_cmd_set_rgb_maxtrix_buf(uint8_t cmd, uint8_t len, uint8_t *buf)
+void _process_cmd_set_rgb_matrix_buf(uint8_t cmd, uint8_t len, uint8_t *buf)
 {
     for (uint16_t i = 0; i < len;) {
         //dprintf("rgb:%d(%d):%d,%d,%d\n", buf[i], buf[i+1], buf[i+2], buf[i+3], buf[i+4]);
         uint8_t li = buf[i++];
-        if (li < MAX_RGB_INDEX) {
+        if (li < RGB_MATRIX_LED_COUNT) {
             rgb_matrix_host_buf.led[li].duration = buf[i++];
             rgb_matrix_host_buf.led[li].r = buf[i++];
             rgb_matrix_host_buf.led[li].g = buf[i++];
@@ -1031,6 +1031,27 @@ void _process_cmd_get_battery_status(uint8_t cmd, uint8_t len, uint8_t *buf)
     response[0] = FRMT_ID_BATTERY_STATUS;
     response[1] = dev_info.rf_charge;
     response[2] = dev_info.rf_baterry;
+    firmata_send_sysex(FRMT_CMD_RESPONSE, response, sizeof(response));
+}
+
+_PROCESS_CMD_SET(rgb_matrix_mode)
+{
+    uint8_t matrix_mode = buf[0];
+    dprintf("[RGB]mode=%d\n", matrix_mode);
+    if (matrix_mode) {
+        rgb_matrix_enable_noeeprom();
+        rgb_matrix_mode_noeeprom(matrix_mode);
+    } else {
+        rgb_matrix_disable_noeeprom();
+    }
+}
+
+_PROCESS_CMD_GET(rgb_matrix_mode)
+{
+    uint8_t response[2];
+    response[0] = FRMT_ID_RGB_MATRIX_MODE;
+    response[1] = rgb_matrix_get_mode();
+
     firmata_send_sysex(FRMT_CMD_RESPONSE, response, sizeof(response));
 }
 

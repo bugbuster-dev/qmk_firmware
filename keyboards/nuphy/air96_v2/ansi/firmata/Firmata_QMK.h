@@ -10,18 +10,17 @@ extern "C" {
 
 void firmata_sysex_handler(uint8_t cmd, uint8_t len, uint8_t *buf);
 
-void _process_cmd_set_rgb_maxtrix_buf   (uint8_t cmd, uint8_t len, uint8_t *buf);
+#define _PROCESS_CMD_SET(name)       void _process_cmd_set_##name     (uint8_t cmd, uint8_t len, uint8_t *buf)
+#define _PROCESS_CMD_GET(name)       void _process_cmd_get_##name     (uint8_t cmd, uint8_t len, uint8_t *buf)
+#define _PROCESS_CMD_SETGET(name)    _PROCESS_CMD_SET(name); _PROCESS_CMD_GET(name)
 
-void _process_cmd_set_default_layer     (uint8_t cmd, uint8_t len, uint8_t *buf);
-void _process_cmd_get_default_layer     (uint8_t cmd, uint8_t len, uint8_t *buf);
+_PROCESS_CMD_SETGET(default_layer);
+_PROCESS_CMD_SETGET(debug_mask);
+_PROCESS_CMD_SETGET(macwin_mode);
+_PROCESS_CMD_SETGET(battery_status);
+_PROCESS_CMD_SETGET(rgb_matrix_buf);
+_PROCESS_CMD_SETGET(rgb_matrix_mode);
 
-void _process_cmd_set_debug_mask        (uint8_t cmd, uint8_t len, uint8_t *buf);
-void _process_cmd_get_debug_mask        (uint8_t cmd, uint8_t len, uint8_t *buf);
-
-void _process_cmd_set_macwin_mode       (uint8_t cmd, uint8_t len, uint8_t *buf);
-void _process_cmd_get_macwin_mode       (uint8_t cmd, uint8_t len, uint8_t *buf);
-
-void _process_cmd_get_battery_status    (uint8_t cmd, uint8_t len, uint8_t *buf);
 
 enum {
     FRMT_CMD_RESPONSE = 0,
@@ -39,8 +38,9 @@ enum {
     FRMT_ID_RGB_MATRIX_BUF  = 1,
     FRMT_ID_DEFAULT_LAYER   = 2,
     FRMT_ID_DEBUG_MASK      = 3,
-    FRMT_ID_BATTERY_STATUS  = 4, //todo bb: link status, battery status,
+    FRMT_ID_BATTERY_STATUS  = 4,
     FRMT_ID_MACWIN_MODE     = 5,
+    FRMT_ID_RGB_MATRIX_MODE = 6,
 };
 
 
