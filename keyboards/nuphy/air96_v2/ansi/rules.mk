@@ -1,6 +1,7 @@
 SRC += side.c
 SRC += rf.c
 SRC += sleep.c
+SRC += firmata_sysex_handler.c
 SRC += firmata/FirmataParser.cpp
 SRC += firmata/FirmataMarshaller.cpp
 SRC += firmata/Firmata.cpp

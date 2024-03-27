@@ -44,6 +44,19 @@ enum {
 };
 
 
+// rgb matrix buffer set from host
+typedef struct rgb_matrix_host_buffer_t {
+    struct {
+        uint8_t duration;
+        uint8_t r; // todo bb: store 4 bits, value diff around 15 not distinguishable
+        uint8_t g;
+        uint8_t b;
+    } led[RGB_MATRIX_LED_COUNT];
+
+    bool written;
+} rgb_matrix_host_buffer_t;
+
+
 typedef void (*sysexCallbackFunction)(uint8_t command, uint8_t argc, uint8_t *argv);
 
 // Declare your wrapper functions here
