@@ -36,7 +36,8 @@ typedef union {
         bool    keyboard : 1;
         bool    mouse : 1;
         bool    via : 1;
-        uint8_t reserved : 3;
+        bool    dynld : 1;
+        uint8_t reserved : 2;
     };
     uint8_t raw;
 } debug_config_t;

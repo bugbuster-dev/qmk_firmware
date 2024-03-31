@@ -22,5 +22,6 @@ debug_config_t debug_config = {
     .keyboard = false, //
     .mouse    = false, //
     .via      = false,
+    .dynld    = false,
     .reserved = 0      //
 };

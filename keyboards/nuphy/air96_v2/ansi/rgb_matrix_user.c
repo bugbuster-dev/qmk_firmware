@@ -81,8 +81,10 @@ bool dynld_rgb_animation_run(effect_params_t* params) {
     if (g_dynld_funcs.func[DYNLD_FUN_ID_ANIMATION]) {
         funptr_animation_run_t func_animation = (funptr_animation_run_t)g_dynld_funcs.func[DYNLD_FUN_ID_ANIMATION];
         bool ret = func_animation(&s_custom_animation_env, params);
-        dprintf("[DYNLD]rgb anim buf: %d %d %d %d\n", s_custom_animation_env.buf[0], s_custom_animation_env.buf[1],
-                                                      s_custom_animation_env.buf[2], s_custom_animation_env.buf[3]);
+        if (debug_config.dynld) {
+            dprintf("[DYNLD]rgb anim buf: %d %d %d %d\n", s_custom_animation_env.buf[0], s_custom_animation_env.buf[1],
+                                                        s_custom_animation_env.buf[2], s_custom_animation_env.buf[3]);
+        }
         return ret;
     }
     return true;

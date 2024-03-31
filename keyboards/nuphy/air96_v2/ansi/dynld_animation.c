@@ -25,7 +25,7 @@ bool effect_runner_dx_dy_dist(dynld_custom_animation_env_t *anim_env, effect_par
     uint8_t time = _scale16by8(anim_env->time, anim_env->rgb_config->speed >> 1);
 
     anim_env->buf[0] = time;
-    anim_env->buf[1] = anim_env->rgb_config->speed >> 1; //time;
+    anim_env->buf[1] = anim_env->rgb_config->speed;
 
     for (int i = led_min; i < led_max; i++) {
         int16_t dx   = anim_env->led_config->point[i].x - k_rgb_matrix_center.x;
