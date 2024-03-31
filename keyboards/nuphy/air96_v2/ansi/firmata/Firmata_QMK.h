@@ -20,18 +20,19 @@ _PROCESS_CMD_SETGET(macwin_mode);
 _PROCESS_CMD_SETGET(battery_status);
 _PROCESS_CMD_SETGET(rgb_matrix_buf);
 _PROCESS_CMD_SETGET(rgb_matrix_mode);
+_PROCESS_CMD_SETGET(dynld_function);
+_PROCESS_CMD_SETGET(dynld_funexec);
 
 
 enum {
-    FRMT_CMD_RESPONSE = 0,
+    FRMT_CMD_EXTENDED = 0,
     FRMT_CMD_SET = 1,
     FRMT_CMD_GET = 2,
     FRMT_CMD_ADD = 3,
     FRMT_CMD_DEL = 4,
     FRMT_CMD_PUB = 5,
     FRMT_CMD_SUB = 6,
-
-    FRMT_CMD_EXTENDED = 0xff
+    FRMT_CMD_RESPONSE = 0x0f,
 };
 
 enum {
@@ -41,6 +42,8 @@ enum {
     FRMT_ID_BATTERY_STATUS  = 4,
     FRMT_ID_MACWIN_MODE     = 5,
     FRMT_ID_RGB_MATRIX_MODE = 6,
+    FRMT_ID_DYNLD_FUNCTION  = 7, // dynamic load function into ram
+    FRMT_ID_DYNLD_FUNEXEC   = 8, // exec "dynamic loaded function"
 };
 
 
@@ -56,6 +59,19 @@ typedef struct rgb_matrix_host_buffer_t {
     bool written;
 } rgb_matrix_host_buffer_t;
 
+
+enum DYNLD_FUNC_ID {
+    DYNLD_FUN_ID_ANIMATION = 0,
+
+    DYNLD_FUN_ID_TEST = 1,
+    DYNLD_FUN_ID_MAX = 2
+};
+
+typedef struct dynld_funcs {
+    void* func[10];
+} dynld_funcs_t;
+
+//------------------------------------------------------------------------------
 
 typedef void (*sysexCallbackFunction)(uint8_t command, uint8_t argc, uint8_t *argv);
 
