@@ -19,6 +19,7 @@ extern void m_break_all_key(void);
 static void dprintf_buf(uint8_t *buf, uint8_t len) {
     for (int i = 0; i < len; i++) {
         dprintf("%02x ", buf[i]);
+        if (((i+1)%16) == 0) dprintf("\n");
     }
     dprintf("\n");
 }
@@ -72,7 +73,7 @@ rgb_matrix_host_buffer_t g_rgb_matrix_host_buf;
 
 void virtser_recv(uint8_t c)
 {
-#if VIRTSER_FIRMATA
+#ifdef VIRTSER_FIRMATA
     if (firmata_recv(c) < 0) {
         dprintf("[E]firmata_recv\n");
     }
@@ -265,6 +266,6 @@ _PROCESS_CMD_SET(dynld_funexec)
         int ret = fun_test(&s_dynld_test_env);
 
         dprintf("[DYNLD]fun ret=%d\n", ret);
-        dprintf_buf(s_dynld_test_env.buf, 16);
+        dprintf_buf(s_dynld_test_env.buf, 32);
     }
 }

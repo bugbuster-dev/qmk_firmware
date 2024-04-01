@@ -128,6 +128,10 @@ ifeq ($(strip $(VIRTSER_ENABLE)), yes)
     OPT_DEFS += -DVIRTSER_ENABLE
 endif
 
+ifeq ($(strip $(VIRTSER_FIRMATA)), yes)
+    OPT_DEFS += -DVIRTSER_FIRMATA
+endif
+
 ifeq ($(strip $(MOUSEKEY_ENABLE)), yes)
     OPT_DEFS += -DMOUSEKEY_ENABLE
     MOUSE_ENABLE := yes

@@ -74,6 +74,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //------------------------------------------------------------------------------
 
-#define VIRTSER_FIRMATA         1
 //#define NUPHY_TASK_USER_TIME_MEASURE 1
 #define SLEEP_ENABLE_DEFAULT    0
