@@ -146,12 +146,15 @@ public:
 
 //------------------------------------------------------------------------------
 
+
 static firmata::FirmataClass g_firmata;
 static bool g_firmata_started = 0;
 static BufferStream g_virtser_stream(virtser_send_nonblock);
 static BufferStream g_console_stream(nullptr);
 
 extern "C" {
+
+__attribute__((weak)) void virtser_send_nonblock(const uint8_t byte) {}
 
 // "console sendchar"
 int8_t sendchar_virtser(uint8_t c) {
@@ -165,7 +168,7 @@ void firmata_initialize(const char* firmware) {
     //g_firmata.begin(g_virtser_stream);
 }
 
-void firmata_begin() {
+void firmata_start() {
     g_firmata.begin(g_virtser_stream);
     g_firmata_started = 1;
 }
@@ -183,7 +186,7 @@ void firmata_send_sysex(uint8_t cmd, uint8_t* data, int len) {
 
 int firmata_recv(uint8_t c) {
     if (!g_firmata_started) {
-        firmata_begin();
+        firmata_start();
     }
 
     return g_virtser_stream.received(c);

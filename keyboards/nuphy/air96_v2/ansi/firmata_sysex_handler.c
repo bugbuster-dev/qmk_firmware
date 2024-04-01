@@ -31,7 +31,7 @@ int in_thumb_mode(void) {
     return (xpsr & (1 << 24)) != 0; // Check T bit (bit 24)
 }
 
-// adjusting the function pointer +1 for thumb mode
+// adjusting the function pointer for thumb mode
 uint32_t thumb_fun_addr(void* fun) {
     return (((uint32_t)fun) | 1);
 }

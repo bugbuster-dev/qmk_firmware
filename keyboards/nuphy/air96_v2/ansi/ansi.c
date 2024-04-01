@@ -18,9 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ansi.h"
 #include "usb_main.h"
 
-#include "virtser.h"
+#ifdef FIRMATA_ENABLE
 #include "firmata/Firmata_QMK.h"
-
+#endif
 
 #define RF_LONG_PRESS_DELAY   30
 #define DEV_RESET_PRESS_DELAY 30
@@ -872,8 +872,10 @@ void keyboard_post_init_user(void)
     m_londing_eeprom_data();
     m_power_on_dial_sw_scan();
 
+#ifdef FIRMATA_ENABLE
     firmata_initialize("Nuphy Firmata");
     firmata_attach(0, firmata_sysex_handler);
+#endif
 }
 
 /**
@@ -888,9 +890,9 @@ bool rgb_matrix_indicators_user(void)
 }
 
 
+#ifdef FIRMATA_ENABLE
 
 extern rgb_matrix_host_buffer_t g_rgb_matrix_host_buf;
-
 
 // show rgb matrix set by user on host side
 void rgb_matrix_host_show(void)
@@ -908,6 +910,8 @@ void rgb_matrix_host_show(void)
 
     if (!matrix_set) g_rgb_matrix_host_buf.written = 0;
 }
+
+#endif
 
 /**
    housekeeping_task_user
@@ -939,9 +943,11 @@ void housekeeping_task_user(void)
 
     m_side_led_show(keyb_indicator_config);
 
+#ifdef FIRMATA_ENABLE
     rgb_matrix_host_show();
 
     firmata_process();
+#endif
 
 #if NUPHY_TASK_USER_TIME_MEASURE
     task_user_total_time +=  timer_read32() - time_start;

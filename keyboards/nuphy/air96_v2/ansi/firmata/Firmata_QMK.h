@@ -68,16 +68,15 @@ enum DYNLD_FUNC_ID {
 };
 
 typedef struct dynld_funcs {
-    void* func[10];
+    void* func[DYNLD_FUN_ID_MAX];
 } dynld_funcs_t;
 
 //------------------------------------------------------------------------------
 
 typedef void (*sysexCallbackFunction)(uint8_t command, uint8_t argc, uint8_t *argv);
 
-// Declare your wrapper functions here
 void firmata_initialize(const char* firmware);
-void firmata_begin(void);
+void firmata_start(void);
 
 void firmata_attach(uint8_t cmd, sysexCallbackFunction newFunction);
 

@@ -1,18 +1,12 @@
-SRC += side.c
-SRC += rf.c
-SRC += sleep.c
-SRC += firmata_sysex_handler.c
-SRC += rgb_matrix_user.c
-SRC += firmata/FirmataParser.cpp
-SRC += firmata/FirmataMarshaller.cpp
-SRC += firmata/Firmata.cpp
-SRC += firmata/Firmata_QMK.cpp
-SRC += firmata/Print.cpp
+SRC += \
+side.c \
+rf.c \
+sleep.c \
+# empty line
+
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+current_dir := $(dir $(mkfile_path))
+
+include $(current_dir)/firmata/firmata.mk
 
 QUANTUM_LIB_SRC += uart.c
-
-RGB_MATRIX_CUSTOM_USER = yes
-
-CONSOLE_ENABLE = yes
-CONSOLE_VIRTSER = yes
-VIRTSER_ENABLE = yes
