@@ -73,11 +73,9 @@ rgb_matrix_host_buffer_t g_rgb_matrix_host_buf;
 
 void virtser_recv(uint8_t c)
 {
-#ifdef VIRTSER_FIRMATA
     if (firmata_recv(c) < 0) {
         dprintf("[E]firmata_recv\n");
     }
-#endif
 }
 
 

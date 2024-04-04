@@ -897,7 +897,13 @@ extern rgb_matrix_host_buffer_t g_rgb_matrix_host_buf;
 // show rgb matrix set by user on host side
 void rgb_matrix_host_show(void)
 {
+extern void rgb_matrix_lock(void);
+extern void rgb_matrix_unlock(void);
+
     if (!g_rgb_matrix_host_buf.written) return;
+
+    // "unlock" rgb matrix to set color
+    rgb_matrix_unlock();
 
     bool matrix_set = 0;
     for (uint8_t li = 0; li < RGB_MATRIX_LED_COUNT; li++) {
@@ -908,7 +914,14 @@ void rgb_matrix_host_show(void)
         }
     }
 
-    if (!matrix_set) g_rgb_matrix_host_buf.written = 0;
+    if (matrix_set) {
+        // user is sending rgb data from host, "lock" rgb matrix to block others to set color
+        rgb_matrix_lock();
+    } else {
+        g_rgb_matrix_host_buf.written = 0;
+        // user stopped sending rgb data, unlock rgb matrix
+        rgb_matrix_unlock();
+    }
 }
 
 #endif

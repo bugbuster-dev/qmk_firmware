@@ -196,11 +196,24 @@ void rgb_matrix_update_pwm_buffers(void) {
     rgb_matrix_driver.flush();
 }
 
+
+static bool s_rgb_matrix_locked = false;
+
+void rgb_matrix_lock(void) {
+    s_rgb_matrix_locked = true;
+}
+
+void rgb_matrix_unlock(void) {
+    s_rgb_matrix_locked = false;
+}
+
 void rgb_matrix_set_color(int index, uint8_t red, uint8_t green, uint8_t blue) {
+    if (s_rgb_matrix_locked) return;
     rgb_matrix_driver.set_color(index, red, green, blue);
 }
 
 void rgb_matrix_set_color_all(uint8_t red, uint8_t green, uint8_t blue) {
+    if (s_rgb_matrix_locked) return;
 #if defined(RGB_MATRIX_ENABLE) && defined(RGB_MATRIX_SPLIT)
     for (uint8_t i = 0; i < RGB_MATRIX_LED_COUNT; i++)
         rgb_matrix_set_color(i, red, green, blue);
