@@ -878,24 +878,11 @@ void keyboard_post_init_user(void)
 #endif
 }
 
-/**
-   rgb_matrix_indicators_user
- */
-bool rgb_matrix_indicators_user(void)
-{
-    if(f_bat_num_show) {
-        num_led_show();
-    }
-    return true;
-}
-
-
 #ifdef FIRMATA_ENABLE
-
 extern rgb_matrix_host_buffer_t g_rgb_matrix_host_buf;
 
 // show rgb matrix set by user on host side
-void rgb_matrix_host_show(void)
+void rgb_matrix_host_buf_render(void)
 {
 extern void rgb_matrix_lock(void);
 extern void rgb_matrix_unlock(void);
@@ -923,8 +910,21 @@ extern void rgb_matrix_unlock(void);
         rgb_matrix_unlock();
     }
 }
-
 #endif
+
+/**
+   rgb_matrix_indicators_user
+ */
+bool rgb_matrix_indicators_user(void)
+{
+    if(f_bat_num_show) {
+        num_led_show();
+    }
+#ifdef FIRMATA_ENABLE
+    rgb_matrix_host_buf_render();
+#endif
+    return true;
+}
 
 /**
    housekeeping_task_user
@@ -957,8 +957,6 @@ void housekeeping_task_user(void)
     m_side_led_show(keyb_indicator_config);
 
 #ifdef FIRMATA_ENABLE
-    rgb_matrix_host_show();
-
     firmata_process();
 #endif
 
