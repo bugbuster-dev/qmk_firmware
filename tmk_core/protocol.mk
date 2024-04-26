@@ -37,16 +37,16 @@ ifeq ($(strip $(RAW_ENABLE)), yes)
     OPT_DEFS += -DRAW_ENABLE
 endif
 
-ifeq ($(strip $(CONSOLE_VIRTSER)), yes)
-    OPT_DEFS += -DCONSOLE_VIRTSER
-endif
-
 ifeq ($(strip $(CONSOLE_ENABLE)), yes)
     OPT_DEFS += -DCONSOLE_ENABLE
 else
     # TODO: decouple this so other print backends can exist
     OPT_DEFS += -DNO_PRINT
     OPT_DEFS += -DNO_DEBUG
+endif
+
+ifeq ($(strip $(CONSOLE_FIRMATA)), yes)
+    OPT_DEFS += -DCONSOLE_FIRMATA
 endif
 
 ifeq ($(strip $(NKRO_ENABLE)), yes)

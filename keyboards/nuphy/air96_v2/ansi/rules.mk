@@ -2,6 +2,7 @@ SRC += \
 side.c \
 rf.c \
 sleep.c \
+debug_user.c \
 # empty line
 
 QUANTUM_LIB_SRC += uart.c

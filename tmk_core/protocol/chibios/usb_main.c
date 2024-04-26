@@ -358,7 +358,7 @@ typedef struct {
 typedef struct {
     union {
         struct {
-#if defined(CONSOLE_ENABLE) && !defined(CONSOLE_VIRTSER)
+#if defined(CONSOLE_ENABLE) && !defined(CONSOLE_FIRMATA)
             usb_driver_config_t console_driver;
 #endif
 #ifdef RAW_ENABLE
@@ -376,7 +376,7 @@ typedef struct {
 } usb_driver_configs_t;
 
 static usb_driver_configs_t drivers = {
-#if defined(CONSOLE_ENABLE) && !defined(CONSOLE_VIRTSER)
+#if defined(CONSOLE_ENABLE) && !defined(CONSOLE_FIRMATA)
 #    define CONSOLE_IN_CAPACITY 4
 #    define CONSOLE_OUT_CAPACITY 4
 #    define CONSOLE_IN_MODE USB_EP_MODE_TYPE_INTR
@@ -951,14 +951,9 @@ void send_digitizer(report_digitizer_t *report) {
 
 #ifdef CONSOLE_ENABLE
 
-#ifdef VIRTSER_ENABLE
+#ifdef CONSOLE_FIRMATA
 
-int8_t sendchar(uint8_t c) {
-    return sendchar_virtser(c);
-}
-
-void console_task(void) {
-}
+void console_task(void) {}
 
 #else
 

@@ -874,7 +874,6 @@ void keyboard_post_init_user(void)
 
 #ifdef FIRMATA_ENABLE
     firmata_initialize("Nuphy Firmata");
-    firmata_attach(0, firmata_sysex_handler);
 #endif
 }
 
@@ -957,7 +956,7 @@ void housekeeping_task_user(void)
     m_side_led_show(keyb_indicator_config);
 
 #ifdef FIRMATA_ENABLE
-    firmata_process();
+    firmata_task();
 #endif
 
 #if NUPHY_TASK_USER_TIME_MEASURE
