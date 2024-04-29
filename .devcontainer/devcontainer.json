@@ -9,7 +9,10 @@
       "repositories": {
         "bugbuster-dev/nuphy-firmware": {
           "permissions": "write-all"
-        }
+        },
+        "bugbuster-dev/qmk-builds": {
+          "permissions": "write-all"
+        }        
       }
     }
   }
