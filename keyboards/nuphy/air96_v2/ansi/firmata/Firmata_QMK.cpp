@@ -6,6 +6,7 @@ extern "C" {
 #include "virtser.h"
 #include "util.h"
 #include "timer.h"
+#include "debug_user.h"
 }
 
 typedef uint16_t tx_buffer_index_t;
@@ -189,6 +190,14 @@ static QmkFirmata s_firmata;
 
 static void _send_console_string(uint8_t *data, uint16_t len) {
     if (!s_firmata.started()) return;
+#ifdef DEVEL_BUILD
+    static bool build_date_sent = 0;
+    if (!build_date_sent) {
+        extern const char* __BUILD_DATE__;
+        s_firmata.sendString(__BUILD_DATE__);
+        build_date_sent = 1;
+    }
+#endif
     data[len] = 0;
     s_firmata.sendString((char*)data);
 }
@@ -255,7 +264,10 @@ int firmata_recv(uint8_t c) {
 int firmata_recv_data(uint8_t *data, uint8_t len) {
     int i = 0;
     while (len--) {
-        if (firmata_recv(data[i++]) < 0) return -1;
+        if (firmata_recv(data[i++]) < 0) {
+            DBG_USR(firmata, "[FA]","recv:error\n"); // buffer overflow
+            return -1;
+        }
     }
     //debug_led_on(-1);
     return 0;
