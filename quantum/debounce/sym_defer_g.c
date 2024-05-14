@@ -28,6 +28,8 @@ When no state changes have occured for DEBOUNCE milliseconds, we push the state.
 static bool         debouncing = false;
 static fast_timer_t debouncing_time;
 
+uint8_t g_debounce = DEBOUNCE;
+
 void debounce_init(uint8_t num_rows) {}
 
 bool debounce(matrix_row_t raw[], matrix_row_t cooked[], uint8_t num_rows, bool changed) {
@@ -38,7 +40,7 @@ bool debounce(matrix_row_t raw[], matrix_row_t cooked[], uint8_t num_rows, bool 
         debouncing_time = timer_read_fast();
     }
 
-    if (debouncing && timer_elapsed_fast(debouncing_time) >= DEBOUNCE) {
+    if (debouncing && timer_elapsed_fast(debouncing_time) >= g_debounce) {
         if (memcmp(cooked, raw, sizeof(matrix_row_t) * num_rows) != 0) {
             memcpy(cooked, raw, sizeof(matrix_row_t) * num_rows);
             cooked_changed = true;

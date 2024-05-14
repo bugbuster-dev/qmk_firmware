@@ -7,6 +7,7 @@ extern "C" {
 #include "util.h"
 #include "timer.h"
 #include "debug_user.h"
+#include "version.h"
 }
 
 typedef uint16_t tx_buffer_index_t;
@@ -193,8 +194,7 @@ static void _send_console_string(uint8_t *data, uint16_t len) {
 #ifdef DEVEL_BUILD
     static bool build_date_sent = 0;
     if (!build_date_sent) {
-        extern const char* __BUILD_DATE__;
-        s_firmata.sendString(__BUILD_DATE__);
+        s_firmata.sendString(QMK_BUILDDATE "\n");
         build_date_sent = 1;
     }
 #endif
@@ -216,20 +216,20 @@ static BufferStream s_console_stream(nullptr, 0,
 
 extern "C" {
 
-#ifdef DEBUG_LED_ENABLE
-void debug_led_on(int led)
+void debug_led_on(int li)
 {
+#ifdef DEVEL_BUILD
     extern rgb_matrix_host_buffer_t g_rgb_matrix_host_buf;
-    static uint8_t i = 0;
-    if (led == -1) led = i;
-    g_rgb_matrix_host_buf.led[led].duration = 250;
-    g_rgb_matrix_host_buf.led[led].r = 0;
-    g_rgb_matrix_host_buf.led[led].g = 200;
-    g_rgb_matrix_host_buf.led[led].b = 200;
+    static uint8_t s_li = 0;
+    if (li == -1) li = s_li;
+    g_rgb_matrix_host_buf.led[li].duration = 250;
+    g_rgb_matrix_host_buf.led[li].r = 0;
+    g_rgb_matrix_host_buf.led[li].g = 200;
+    g_rgb_matrix_host_buf.led[li].b = 200;
     g_rgb_matrix_host_buf.written = 1;
-    i = (i+1)%RGB_MATRIX_LED_COUNT;
-}
+    s_li = (s_li+1)%RGB_MATRIX_LED_COUNT;
 #endif
+}
 
 // console sendchar
 int8_t sendchar(uint8_t c) {
